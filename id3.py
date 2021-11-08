@@ -5,6 +5,8 @@ File: id3.py
 Class: CSCI 4350
 Instructor: Dr. Joshua Phillips
 Description: Module for ID3 Decision Tree.
+
+Ch. 18 AIMA 3ed: Learning from Examples
 """
 
 import argparse
