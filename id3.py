@@ -10,16 +10,27 @@ Ch. 18 AIMA 3ed: Learning from Examples
 """
 
 import argparse
+import numpy as np
+import math
 
 
 class ID3DecisionTree:
     """ID3 Decision Tree."""
 
-    def __init__(self,):
+    def __init__(self, x, y):
         """Define state for ID3DecisionTree.
 
-        :param:
+        :param x:
+        :param y:
         """
+
+        # Save data
+        self.X = x
+        self.y = y
+
+        # Number of classes
+        self.classes, self.classes_counts = np.unique(
+            self.y, return_counts=True)
 
         pass
 
@@ -69,6 +80,18 @@ class ID3DecisionTree:
         :return:
         """
         pass
+
+    def compute_entropy_of_set_s(self,):
+        return self.__compute_entropy_of_set_s()
+
+    def __compute_entropy_of_set_s(self,):
+        """Compute entropy of classes."""
+
+        total_examples = len(self.y)
+        return -1 * sum([
+            (class_count / total_examples) *
+            math.log(class_count/total_examples, 2)
+            for class_count in self.classes_counts])
 
 
 if __name__ == '__main__':
