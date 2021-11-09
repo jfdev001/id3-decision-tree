@@ -47,6 +47,9 @@ class ID3DecisionTree:
         self.X = X
         self.y = y
 
+        # The root of the tree
+        self.root = None
+
         # # Number of classes
         # self.labels, self.labels_counts = np.unique(
         #     self.y, return_counts=True)
