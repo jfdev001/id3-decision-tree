@@ -17,7 +17,7 @@ import math
 class ID3DecisionTree:
     """ID3 Decision Tree."""
 
-    def __init__(self, x, y):
+    def __init__(self, X, y):
         """Define state for ID3DecisionTree.
 
         :param x:
@@ -25,33 +25,46 @@ class ID3DecisionTree:
         """
 
         # Save data
-        self.X = x
+        self.X = X
         self.y = y
 
-        # Number of classes
-        self.classes, self.classes_counts = np.unique(
-            self.y, return_counts=True)
+        # # Number of classes
+        # self.labels, self.labels_counts = np.unique(
+        #     self.y, return_counts=True)
 
-        pass
+        # # Compute entropy of set
+        # self.entropy_of_dataset = self.__entropy(self.labels_counts)
 
-    def train(self,):
-        """Train ID3DecisionTree.
-
-        :param:
-
-        :return:
-        """
-
-        pass
-
-    def test(self,):
-        """Test ID3DecisionTree.
+    def create_tree(self,):
+        """Create the ID3DecisionTree.
 
         :param:
 
         :return:
         """
+
         pass
+
+    def test_tree(self,):
+        """Test the ID3DecisionTree.
+
+        :param:
+
+        :return:
+        """
+        pass
+
+    # TODO: Remove
+    def entropy(self, obj_counts):
+        return self.__entropy(obj_counts)
+
+    # TODO: Remove
+    def expected_information(self, label_counts, attr_counts):
+        return self.__expected_information(label_counts, attr_counts)
+
+    # TODO: Remove
+    def information_gain(self, entropy, expected_information):
+        return self.__information_gain(entropy, expected_information)
 
     def __sort(self,):
         """Sort training data along each attribute.
@@ -72,26 +85,59 @@ class ID3DecisionTree:
         """
         pass
 
-    def __compute_information_gain(self,):
+    def __information_gain(self, entropy, expected_information):
         """Calcluate information gain for split point.
 
+        :param:
         :param:
 
         :return:
         """
-        pass
+        return entropy - expected_information
 
-    def compute_entropy_of_set_s(self,):
-        return self.__compute_entropy_of_set_s()
+    def __entropy(self, obj_counts):
+        """Computed entropy for message.
 
-    def __compute_entropy_of_set_s(self,):
-        """Compute entropy of classes."""
+        This is the uncertainty in the message.
 
-        total_examples = len(self.y)
-        return -1 * sum([
-            (class_count / total_examples) *
-            math.log(class_count/total_examples, 2)
-            for class_count in self.classes_counts])
+        For E(x) = x * log_2(x), the limit as x -> 0^+ [E(x)] = 0.
+
+        :param obj_counts: <class 'list'> of <class 'int'> 
+            List where each element is the
+            number of objects belonging to a particular class. E.g.,
+            if there are 3 label classes [0 1 2], the first
+            element of obj_counts should be the number of objects belonging
+            to class 0, the second element should be the number
+            objects belonging to class 1, and the third element of
+            should be the number of objects belonging to class 2.
+
+        :return: E(a, b, c, ...)
+        """
+
+        return -sum([(
+            obj_i / sum(obj_counts)) * math.log(obj_i / sum(obj_counts), 2)
+            for obj_i in obj_counts if obj_i != 0])
+
+    def __expected_information(self, label_counts, attr_counts):
+        """Expected information required for tree with some attribute as node.
+
+
+        :param label_counts:
+        :param attr_counts: <class 'list'> of <class 'list'> where the 
+            number of rows is the number of discrete values
+            that the attribute can take on while the number of columns
+            is the number of values that the label can take on. For example,
+            if an attribute 'outlook' = {overcast, rain, sunny} while
+            the 'label' = {0, 1}, then the attr_counts matrix will be
+            3 x 2, [0, 0] will be the number of overcast 'outlook's
+            that also belong to the label 0.
+
+        :return: E(A)
+        """
+
+        total_num_labels = sum(label_counts)
+        return sum((sum(c_i) / total_num_labels) * self.__entropy(c_i)
+                   for c_i in attr_counts)
 
 
 if __name__ == '__main__':
