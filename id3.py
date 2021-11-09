@@ -14,6 +14,20 @@ import numpy as np
 import math
 
 
+class Node:
+    """Node for decision tree."""
+
+    def __init__(self):
+        """Define state for Node.
+
+        TODO: Is this state formulation valid??
+        """
+
+        self.attr = None
+        self.next = None
+        self.children = None
+
+
 class ID3DecisionTree:
     """ID3 Decision Tree."""
 
@@ -35,7 +49,7 @@ class ID3DecisionTree:
         # # Compute entropy of set
         # self.entropy_of_dataset = self.__entropy(self.labels_counts)
 
-    def create_tree(self,):
+    def id3(self,):
         """Create the ID3DecisionTree.
 
         :param:
