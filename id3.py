@@ -17,15 +17,20 @@ import math
 class Node:
     """Node for decision tree."""
 
-    def __init__(self):
+    def __init__(self, state, children=None):
         """Define state for Node.
+
+        :param state: State information of the node.
+        :param children: <class 'dict'> mapping non-terminal
+            node sub-states (e.g., outlook = {sunny, overcast, rain})
+            to some next node. If children is None, then node is 
+            terminal.
 
         TODO: Is this state formulation valid??
         """
 
-        self.attr = None
-        self.next = None
-        self.children = None
+        self.state = state
+        self.children = children
 
 
 class ID3DecisionTree:
@@ -136,7 +141,7 @@ class ID3DecisionTree:
         """Expected information required for tree with some attribute as node.
 
 
-        :param label_counts:
+        :param label_counts: <class 'list'> of <class 'int'>
         :param attr_counts: <class 'list'> of <class 'list'> where the 
             number of rows is the number of discrete values
             that the attribute can take on while the number of columns
