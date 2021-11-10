@@ -15,7 +15,10 @@ import math
 
 
 class Node:
-    def __init__(self, attr_ix,  value=None, left_child=None, right_child=None):
+    def __init__(
+            self, attr_ixs,
+            value=None,
+            left_child=None, right_child=None, decision=None):
         """Define state for Node.
 
         :param attr_ix: The index corresponding to the attribute
@@ -28,41 +31,57 @@ class Node:
             the decision associated with a node.
         :param left_child: Pointer to left Node.
         :param right_child: Pointer to right Node.
+        :param decision: Class label given a particular 
         """
 
         # Save args
-        self.attr_ix = attr_ix
+        self.attr_ixs = attr_ixs
         self.value = value
         self.left_child = left_child
         self.right_child = right_child
+        self.decision = decision
 
 
 class ID3DecisionTree:
     """ID3 Decision Tree."""
 
-    def __init__(self, X, y):
+    def __init__(self):
         """Define state for ID3DecisionTree.
 
-        :param x:
-        :param y:
+        :param data: <class 'numpy.ndarray'>
         """
 
-        # Save data
-        self.X = X
-        self.y = y
-
         # The root of the tree
-        self.root = None
+        self.root = Node(attr_ix=None)
 
-    def id3(self,):
+    def decision_tree_learning(self, data):
+        """Helper function for ID3 decision tree learning.
+
+        :param data: Contains the learning set and attribute sets.
+
+        :return: None
+        """
+        self.root = self.__id3(data=data, node=self.root)
+
+    def __id3(self, data, node):
         """Create the ID3DecisionTree.
 
-        :param:
+        :param data:
 
         :return:
         """
 
-        pass
+        # Compute entropy of subset
+        unique_labels, unique_labels_counts = np.unique(
+            data[:, -1], return_counts=True)
+        learning_set_entropy = self.__entropy(unique_labels_counts)
+
+        # All labels are the same
+        if learning_set_entropy == 0:
+            node.attr_ix = -1
+            node.value = unique_labels[0]
+        else:
+            pass
 
     def test_tree(self,):
         """Test the ID3DecisionTree.
