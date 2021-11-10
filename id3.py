@@ -16,34 +16,90 @@ import math
 
 class Node:
     def __init__(
-            self, variable=None, value=None):
+            self, learning_set_s=None, variable=None, value=None):
         """Define state for Node.
 
+        :param learning_set_s: <class 'numpy.ndarray'>
         :param variable:
         :param value:
         """
 
-        self.children = []
+        self.learning_set_s = learning_set_s
         self.variable = variable
         self.value = value
+        self.decision = None
+        self.children = []
 
     def add_child(self, node):
+        """Appends a child to the list of children of the node."""
+
         self.children.append(node)
 
     def get_children(self,):
+        """Returns the list of children of the node."""
+
         return self.children
 
     def get_variable(self,):
+        """Returns the variable of the node."""
+
         return self.variable
 
     def get_value(self,):
+        """Returns the value of the node."""
+
         return self.value
 
+    def get_subset(self,):
+        """Returns the labels for all rows."""
+
+        return self.learning_set_s[:, -1]
+
+    def set_unanimous_decision(self):
+        """Sets unambiguous decision for node."""
+
+        self.decision = self.__get_unanimous_decision()
+
+    def set_probabilistic_decision(self,):
+        """Sets decision for node based on max probabilities of labels and ties."""
+
+        self.decision = self.__get_probabilistic_decision()
+
     def is_root(self,):
+        """Returns bool for whether node is root node.
+
+        A root node WILL have a learning_set_s, it COULD have a decision,
+        it COULD have children, but it should NOT have any variable
+        or value associated with it.
+        """
+
         return self.variable is None and self.value is None
 
     def is_leaf(self,):
+        """Returns bool for whether node is leaf.
+
+        A leaf node necessarily has no children associated with it.
+        """
+
         return len(self.children) == 0
+
+    def __get_unanimous_decision(self,):
+        """Returns a single element of the label subset if all labels are equal."""
+
+        if self.__all_labels_equal():
+            return self.get_subset()[0]
+
+        else:
+            raise ValueError('All labels are NOT equal!')
+
+    def __get_probabilistic_decision(self,):
+        """Returns best possible decision for node."""
+        return
+
+    def __all_labels_equal(self,):
+        """Check to see if all labels in learning set are the same."""
+
+        return np.all(self.get_subset() == self.get_subset[0])
 
 
 class ID3DecisionTree:
@@ -53,7 +109,7 @@ class ID3DecisionTree:
         """Define state for ID3DecisionTree."""
 
         # The root of the tree
-        self.root = Node()
+        self.root = None
 
     def decision_tree_learning(self, data):
         """Helper function for ID3 decision tree learning.
@@ -62,9 +118,9 @@ class ID3DecisionTree:
 
         :return: None
         """
-        self.__id3(data, node=self.root)
+        self.root = self.__id3(data)
 
-    def __id3(self, data, node):
+    def __id3(self, data):
         """Create the ID3DecisionTree.
 
         :param data:
@@ -72,14 +128,34 @@ class ID3DecisionTree:
         :return:
         """
 
+        # Create node and add learning set
+        tree_node = Node(learning_set=data)
+
         # Compute entropy of subset
-        unique_labels, unique_labels_counts = np.unique(
-            data[:, -1], return_counts=True)
-        learning_set_entropy = self.__entropy(unique_labels_counts)
+        node_subset_entropy = self.__node_subset_entropy(tree_node)
 
         # Entropy is 0 for data, therefore all records
         # have same value for categorical attribute
         # return a leaf node with decision attribute: attribute value
+        # Meaning if the input to the decision tree is a variable
+        # whose variable matches variable of a leaf node
+        # then the leaf node yields its decision attribute
+        if node_subset_entropy == 0:
+            tree_node.set_unanimous_decision()
+
+            # Consider how this recurses... it can only return
+            # a node if the node is a leaf node..., this means
+            # that is the root has children, then the root node
+            # will not be returned to the calling function,
+            # thus self.root will not be set...
+            return tree_node
+
+        # If not 0, compute information gain
+        # for each attribute and find attribute with max IG(S, A)
+        # create child node of the root
+
+        # for each child in node, apply ID3 but with the new
+        # subset of data corresponding to the
 
     def test_tree(self,):
         """Test the ID3DecisionTree.
@@ -280,6 +356,22 @@ class ID3DecisionTree:
         return -sum([(
             obj_i / sum(obj_counts)) * math.log(obj_i / sum(obj_counts), 2)
             for obj_i in obj_counts if obj_i != 0])
+
+    def __node_subset_entropy(self, node: Node):
+        """Returns the entropy of the subset (of labels) for node.
+
+        :param node: <class 'Node'>
+
+
+        :return: Entropy(node.get_subset())
+        """
+
+        # Unique counts of labels (e.g., {0, 1} -> {N_0, N_1})
+        _, unique_label_counts = np.unique(
+            node.get_subset(), return_counts=True)
+
+        # Entropy of the subset
+        return self.__entropy(unique_label_counts)
 
     def __expected_information(self, label_counts, subset_counts):
         """Expected information required for tree with some attribute as node.
