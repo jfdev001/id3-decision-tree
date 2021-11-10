@@ -118,18 +118,16 @@ class ID3DecisionTree:
 
         :return: None
         """
-        self.root = self.__id3(data, node=self.root)
+        self.root.learning_set_s = data
+        self.root = self.__id3(node=self.root)
 
-    def __id3(self, data: np.ndarray, node: Node):
+    def __id3(self, node: Node):
         """Create the ID3DecisionTree.
 
         :param data:
 
         :return:
         """
-
-        # Create node and add learning set
-        node.learning_set_s = data
 
         # Compute entropy of subset
         node_subset_entropy = self.__node_subset_entropy(node)
@@ -155,6 +153,9 @@ class ID3DecisionTree:
         # for each attribute and find attribute with max IG(S, A)
         # create child node of the root
         elif node_subset_entropy != 0:
+
+            # Compute choose the attribute with the best information gain
+            # Create a node for each of those
             pass
         # for each child in node, apply ID3 but with the new
         # subset of data corresponding to the
