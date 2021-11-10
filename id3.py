@@ -109,18 +109,18 @@ class ID3DecisionTree:
         """Define state for ID3DecisionTree."""
 
         # The root of the tree
-        self.root = None
+        self.root = Node()
 
-    def decision_tree_learning(self, data):
+    def decision_tree_learning(self, data: np.ndarray):
         """Helper function for ID3 decision tree learning.
 
         :param data: Contains the learning set and attribute sets.
 
         :return: None
         """
-        self.root = self.__id3(data)
+        self.root = self.__id3(data, node=self.root)
 
-    def __id3(self, data):
+    def __id3(self, data: np.ndarray, node: Node):
         """Create the ID3DecisionTree.
 
         :param data:
@@ -129,10 +129,10 @@ class ID3DecisionTree:
         """
 
         # Create node and add learning set
-        tree_node = Node(learning_set=data)
+        node.learning_set_s = data
 
         # Compute entropy of subset
-        node_subset_entropy = self.__node_subset_entropy(tree_node)
+        node_subset_entropy = self.__node_subset_entropy(node)
 
         # Entropy is 0 for data, therefore all records
         # have same value for categorical attribute
@@ -141,21 +141,27 @@ class ID3DecisionTree:
         # whose variable matches variable of a leaf node
         # then the leaf node yields its decision attribute
         if node_subset_entropy == 0:
-            tree_node.set_unanimous_decision()
+            node.set_unanimous_decision()
 
-            # Consider how this recurses... it can only return
-            # a node if the node is a leaf node..., this means
-            # that is the root has children, then the root node
-            # will not be returned to the calling function,
-            # thus self.root will not be set...
-            return tree_node
+            # # Consider how this recurses... it can only return
+            # # a node if the node is a leaf node..., this means
+            # # if the root has children, then the root node
+            # # will not be returned to the calling function,
+            # # thus self.root will not be set...
+
+            # return tree_node
 
         # If not 0, compute information gain
         # for each attribute and find attribute with max IG(S, A)
         # create child node of the root
-
+        elif node_subset_entropy != 0:
+            pass
         # for each child in node, apply ID3 but with the new
         # subset of data corresponding to the
+
+        # Is this necessary? The node is pass by reference?
+        else:
+            return node
 
     def test_tree(self,):
         """Test the ID3DecisionTree.
@@ -167,18 +173,20 @@ class ID3DecisionTree:
         pass
 
     # TODO: Remove
-    def entropy(self, obj_counts):
+    def entropy(self, obj_counts: list) -> float:
         return self.__entropy(obj_counts)
 
     # TODO: Remove
-    def expected_information(self, label_counts, attr_counts):
+    def expected_information(self, label_counts: list, attr_counts: list[list]):
         return self.__expected_information(label_counts, attr_counts)
 
     # TODO: Remove
-    def information_gain(self, entropy, expected_information):
+    def information_gain(self, entropy: float, expected_information: float) -> float:
         return self.__information_gain(entropy, expected_information)
 
-    def subset_of_attrs_belonging_to_labels(self, attr_label_arr):
+    def subset_of_attrs_belonging_to_labels(
+            self,
+            attr_label_arr: np.ndarray) -> list[list]:
         """Computes matrix matching p_i, n_i, ... for any number of values.
 
         The notation p_i and n_i is from
@@ -241,7 +249,11 @@ class ID3DecisionTree:
         # Resulting matrix
         return attr_label_count_matrix
 
-    def discretize_continuous_data(self, attr_label_arr, return_bins=False):
+    def discretize_continuous_data(
+            self,
+            attr_label_arr: np.ndarray,
+            return_bins=False) -> list[np.ndarray] \
+            or tuple[list[np.ndarray], list[tuple]]:
         """Converts continuous attributes to discrete valued array."""
 
         threshold_indices = self.__get_threshold_indices(attr_label_arr)
@@ -253,7 +265,7 @@ class ID3DecisionTree:
         else:
             return discretized_arr
 
-    def __get_threshold_indices(self, attr_label_arr):
+    def __get_threshold_indices(self, attr_label_arr: np.ndarray) -> list[tuple]:
         """Returns list of indices where adjacent labels differ.
 
         Array should be sorted.
@@ -279,7 +291,12 @@ class ID3DecisionTree:
         # Resulting indices
         return threshold_indices
 
-    def __get_binned_arrs(self, attr_label_arr, threshold_indices, return_bins):
+    def __get_binned_arrs(
+        self,
+        attr_label_arr: np.ndarray,
+        threshold_indices: list[list],
+        return_bins: bool) -> list[np.ndarray] \
+            or tuple[list[np.ndarray], list[tuple]]:
         """Use thresholds to return list of data with different bins."""
 
         # Compute the bins
@@ -317,14 +334,17 @@ class ID3DecisionTree:
         else:
             return lst_of_discretized_arrs
 
-    def sort_arr(attr_label_arr):
+    def sort_arr(attr_label_arr: np.ndarray) -> np.ndarray:
         """Sorts the array and keeps labels lined up."""
 
         sorted_attr_indices = np.argsort(attr_label_arr[:, 0])
         attr_label_arr = attr_label_arr[sorted_attr_indices, :]
         return attr_label_arr
 
-    def __information_gain(self, entropy, expected_information):
+    def __information_gain(
+            self,
+            entropy: float,
+            expected_information: float) -> float:
         """Calcluate information gain for split point.
 
         :param entropy:
@@ -334,7 +354,7 @@ class ID3DecisionTree:
         """
         return entropy - expected_information
 
-    def __entropy(self, obj_counts):
+    def __entropy(self, obj_counts: list[list]) -> float:
         """Computed entropy for message.
 
         This is the uncertainty in the message.
@@ -357,7 +377,7 @@ class ID3DecisionTree:
             obj_i / sum(obj_counts)) * math.log(obj_i / sum(obj_counts), 2)
             for obj_i in obj_counts if obj_i != 0])
 
-    def __node_subset_entropy(self, node: Node):
+    def __node_subset_entropy(self, node: Node) -> float:
         """Returns the entropy of the subset (of labels) for node.
 
         :param node: <class 'Node'>
@@ -373,7 +393,10 @@ class ID3DecisionTree:
         # Entropy of the subset
         return self.__entropy(unique_label_counts)
 
-    def __expected_information(self, label_counts, subset_counts):
+    def __expected_information(
+            self,
+            label_counts: list,
+            subset_counts: list[list]) -> float:
         """Expected information required for tree with some attribute as node.
 
         :param label_counts: <class 'list'> of <class 'int'>
