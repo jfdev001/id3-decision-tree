@@ -52,7 +52,7 @@ class ID3DecisionTree:
         """
 
         # The root of the tree
-        self.root = Node(attr_ix=None)
+        # self.root = Node(attr_ix=None)
 
     def decision_tree_learning(self, data):
         """Helper function for ID3 decision tree learning.
