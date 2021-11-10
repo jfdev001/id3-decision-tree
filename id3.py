@@ -16,43 +16,44 @@ import math
 
 class Node:
     def __init__(
-            self, attr_ixs,
-            value=None,
-            left_child=None, right_child=None, decision=None):
+            self, variable=None, value=None):
         """Define state for Node.
 
-        :param attr_ix: The index corresponding to the attribute
-            for a particular dataset. For example,
-            if a row in a dataset is [0.2 0.12 0.5 0]
-            where the last column is the label, then there are four
-            potential attribute indices here. If the attribute index
-            is -1, then the value corresponds to the decision
-        :param value: Corresponds to the value passed to a node or
-            the decision associated with a node.
-        :param left_child: Pointer to left Node.
-        :param right_child: Pointer to right Node.
-        :param decision: Class label given a particular 
+        :param variable:
+        :param value:
         """
 
-        # Save args
-        self.attr_ixs = attr_ixs
+        self.children = []
+        self.variable = variable
         self.value = value
-        self.left_child = left_child
-        self.right_child = right_child
-        self.decision = decision
+
+    def add_child(self, node):
+        self.children.append(node)
+
+    def get_children(self,):
+        return self.children
+
+    def get_variable(self,):
+        return self.variable
+
+    def get_value(self,):
+        return self.value
+
+    def is_root(self,):
+        return self.variable is None and self.value is None
+
+    def is_leaf(self,):
+        return len(self.children) == 0
 
 
 class ID3DecisionTree:
     """ID3 Decision Tree."""
 
     def __init__(self):
-        """Define state for ID3DecisionTree.
-
-        :param data: <class 'numpy.ndarray'>
-        """
+        """Define state for ID3DecisionTree."""
 
         # The root of the tree
-        # self.root = Node(attr_ix=None)
+        self.root = Node()
 
     def decision_tree_learning(self, data):
         """Helper function for ID3 decision tree learning.
@@ -61,7 +62,7 @@ class ID3DecisionTree:
 
         :return: None
         """
-        self.root = self.__id3(data=data, node=self.root)
+        self.__id3(data, node=self.root)
 
     def __id3(self, data, node):
         """Create the ID3DecisionTree.
@@ -76,12 +77,9 @@ class ID3DecisionTree:
             data[:, -1], return_counts=True)
         learning_set_entropy = self.__entropy(unique_labels_counts)
 
-        # All labels are the same
-        if learning_set_entropy == 0:
-            node.attr_ix = -1
-            node.value = unique_labels[0]
-        else:
-            pass
+        # Entropy is 0 for data, therefore all records
+        # have same value for categorical attribute
+        # return a leaf node with decision attribute: attribute value
 
     def test_tree(self,):
         """Test the ID3DecisionTree.
