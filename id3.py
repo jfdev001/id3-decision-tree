@@ -104,7 +104,7 @@ class ID3DecisionTree:
     def information_gain(self, entropy, expected_information):
         return self.__information_gain(entropy, expected_information)
 
-    def matrix_of_attrs_belonging_to_labels(self, attr_label_arr):
+    def subset_of_attrs_belonging_to_labels(self, attr_label_arr):
         """Computes matrix matching p_i, n_i, ... for any number of values.
 
         The notation p_i and n_i is from
@@ -288,6 +288,8 @@ class ID3DecisionTree:
         :return: E(A)
         """
 
+        # c_i is a list where the elements are the counts of the
+        # attribute value belonging to each class of the labels
         total_num_labels = sum(label_counts)
         return sum((sum(c_i) / total_num_labels) * self.__entropy(c_i)
                    for c_i in attr_counts)
