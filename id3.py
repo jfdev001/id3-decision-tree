@@ -144,6 +144,7 @@ class ID3DecisionTree:
         for unique_attr_value in unique_attr_values:
             counts = []
             for unique_label_value in unique_label_values:
+
                 # Boolean vector... elements are True where condition
                 # holds, False otherwise
                 match_vector = np.logical_and(
@@ -184,19 +185,24 @@ class ID3DecisionTree:
         if attr_label_arr[0, 0] > attr_label_arr[1, 0]:
             raise ValueError(':param attr_label_arr: must be sorted')
 
+        # For all rows except the last
         threshold_tup_indices = []
-
         for row in range(len(attr_label_arr)-1):
+
+            # Get the current label and the next label
             cur_label = attr_label_arr[row, -1]
             next_label = attr_label_arr[row+1, -1]
 
+            # If the labels don't equal each other, use this
+            # as splitting information
             if cur_label != next_label:
                 threshold_tup_indices.append((row, row+1))
 
+        # Resulting indices
         return threshold_tup_indices
 
     def __get_binned_arrs(self, attr_label_arr, threshold_indices, return_bins):
-        """Use thresholds to bin the sorted data."""
+        """Use thresholds to return list of data with different bins."""
 
         # Compute the bins
         bins = []
@@ -208,6 +214,7 @@ class ID3DecisionTree:
         # Discretize the data into binned arrs
         lst_of_discretized_arrs = []
         for b in bins:
+
             # Binary thresholds
             discretized_attr_label_arr = attr_label_arr.copy()
             for ix, row in enumerate(discretized_attr_label_arr):
