@@ -142,20 +142,24 @@ class ID3DecisionTree:
         # and count the occurences for which the attribute value
         # is unique value AND the label is a unique value of that label
         for unique_attr_value in unique_attr_values:
+
+            # Counts the subset matches of attr value and label
             counts = []
+
+            # Iterate through each unique value of the labels
             for unique_label_value in unique_label_values:
 
                 # Boolean vector... elements are True where condition
                 # holds, False otherwise
-                match_vector = np.logical_and(
+                subset_vector = np.logical_and(
                     attr_label_arr[:, 0] == unique_attr_value,
                     attr_label_arr[:, 1] == unique_label_value)
 
                 # Non-zero means the instances in which the condition is True
-                match_count = np.count_nonzero(match_vector)
+                subset_count = np.count_nonzero(subset_vector)
 
                 # Append the value to the counts list
-                counts.append(match_count)
+                counts.append(subset_count)
 
             # Append the counts list to the parent matrix
             attr_label_count_matrix.append(counts)
@@ -186,7 +190,7 @@ class ID3DecisionTree:
             raise ValueError(':param attr_label_arr: must be sorted')
 
         # For all rows except the last
-        threshold_tup_indices = []
+        threshold_indices = []
         for row in range(len(attr_label_arr)-1):
 
             # Get the current label and the next label
@@ -196,10 +200,10 @@ class ID3DecisionTree:
             # If the labels don't equal each other, use this
             # as splitting information
             if cur_label != next_label:
-                threshold_tup_indices.append((row, row+1))
+                threshold_indices.append((row, row+1))
 
         # Resulting indices
-        return threshold_tup_indices
+        return threshold_indices
 
     def __get_binned_arrs(self, attr_label_arr, threshold_indices, return_bins):
         """Use thresholds to return list of data with different bins."""
@@ -207,8 +211,14 @@ class ID3DecisionTree:
         # Compute the bins
         bins = []
         for threshold_ix in threshold_indices:
-            bin_ = (attr_label_arr[threshold_ix[0], 0]
-                    + attr_label_arr[threshold_ix[1], 0]) / 2
+
+            # Extract the indices from the tuple
+            ix, adj_ix = threshold_ix
+
+            # The bin is the average of the two
+            bin_ = (attr_label_arr[ix, 0] + attr_label_arr[adj_ix, 0]) / 2
+
+            # Append to a list of potential bins
             bins.append(bin_)
 
         # Discretize the data into binned arrs
@@ -219,6 +229,7 @@ class ID3DecisionTree:
             discretized_attr_label_arr = attr_label_arr.copy()
             for ix, row in enumerate(discretized_attr_label_arr):
 
+                # TODO: Change for specs
                 # attr > bin_ or can be framed as attr >= bin_
                 if row[0] > b:
                     discretized_attr_label_arr[ix, 0] = 0
@@ -242,8 +253,8 @@ class ID3DecisionTree:
     def __information_gain(self, entropy, expected_information):
         """Calcluate information gain for split point.
 
-        :param:
-        :param:
+        :param entropy:
+        :param expected_information:
 
         :return:
         """
@@ -272,11 +283,11 @@ class ID3DecisionTree:
             obj_i / sum(obj_counts)) * math.log(obj_i / sum(obj_counts), 2)
             for obj_i in obj_counts if obj_i != 0])
 
-    def __expected_information(self, label_counts, attr_counts):
+    def __expected_information(self, label_counts, subset_counts):
         """Expected information required for tree with some attribute as node.
 
         :param label_counts: <class 'list'> of <class 'int'>
-        :param attr_counts: <class 'list'> of <class 'list'> where the 
+        :param subset_counts: <class 'list'> of <class 'list'> where the 
             number of rows is the number of discrete values
             that the attribute can take on while the number of columns
             is the number of values that the label can take on. For example,
@@ -292,7 +303,7 @@ class ID3DecisionTree:
         # attribute value belonging to each class of the labels
         total_num_labels = sum(label_counts)
         return sum((sum(c_i) / total_num_labels) * self.__entropy(c_i)
-                   for c_i in attr_counts)
+                   for c_i in subset_counts)
 
 
 if __name__ == '__main__':
