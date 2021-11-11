@@ -9,6 +9,7 @@ Description: Module for ID3 Decision Tree.
 Ch. 18 AIMA 3ed: Learning from Examples
 """
 
+from __future__ import annotations
 import logging
 import datetime
 import sys
@@ -40,7 +41,7 @@ class Node:
 
         self.children.append(node)
 
-    def get_children(self,) -> list["Node"]:
+    def get_children(self,) -> list[Node]:
         """Returns the list of children of the node."""
 
         return self.children
@@ -528,15 +529,21 @@ class ID3DecisionTree:
         for b in bins:
 
             # Binary thresholds
-            discretized_attr_label_arr = attr_label_arr.copy()
+            # TODO: Is the copy here necessary???
+            discretized_attr_label_arr = attr_label_arr.copy().astype(object)
             for ix, row in enumerate(discretized_attr_label_arr):
 
                 # TODO: Change for specs
                 # attr > bin_ or can be framed as attr >= bin_
-                if row[0] > b:
-                    discretized_attr_label_arr[ix, 0] = 0
+                # b <= attr < inf
+                if row[0] >= b:
+                    discretized_attr_label_arr[ix, 0] = pd.Interval(
+                        left=b, right=np.inf, closed='left')
+
+                # -inf < attr < b
                 else:
-                    discretized_attr_label_arr[ix, 0] = 1
+                    discretized_attr_label_arr[ix, 0] = pd.Interval(
+                        left=-np.inf, right=b, closed='neither')
 
             lst_of_discretized_arrs.append(discretized_attr_label_arr)
 
