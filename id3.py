@@ -67,8 +67,10 @@ class TreeNode:
 
     def get_labels(self,) -> np.ndarray:
         """Returns the labels for all rows."""
+
         if len(self.learning_set.shape) == 2:
             return self.learning_set[:, -1]
+
         elif len(self.learning_set.shape) == 1:
             return self.learning_set[-1]
 
@@ -188,6 +190,11 @@ class ID3DecisionTree:
               given=None) -> None:
         """Create the ID3DecisionTree.
 
+        Potential discrete layouts
+
+        H(learning_set) = 0 -> Terminal Node Unananimously
+        Compute Split Points
+
         :param learning_set: The set containing all variables
             (features and labels). The learning_set must only have a
             single label. The label MUST be the last element in a given
@@ -209,9 +216,16 @@ class ID3DecisionTree:
 
         # Sort the learning set if there is continuous data
         # sorted_indices = np.argsort(learning_set)
+        sorted_feature_label_sets = [self.sort_arr(
+            learning_set[:, [feature, -1]]) for feature in range(learning_set.shape[-1] - 1)]
 
-        # Discretize the data -- >= instead of >
-        pass
+        # Discretize the data
+        discretized_feature_label_set = [
+            self.discretize_continuous_data(sorted_feature_label_set)
+            for sorted_feature_label_set in sorted_feature_label_sets]
+
+        LOG.debug(str(discretized_feature_label_set))
+        breakpoint()
 
         # Want to keep the original learning set
         # this is because if you don't, then you will have issues
@@ -643,7 +657,7 @@ class ID3DecisionTree:
         else:
             return lst_of_discretized_arrs
 
-    def sort_arr(attr_label_arr: np.ndarray) -> np.ndarray:
+    def sort_arr(self, attr_label_arr: np.ndarray) -> np.ndarray:
         """Sorts the array and keeps labels lined up."""
 
         sorted_attr_indices = np.argsort(attr_label_arr[:, 0])
@@ -750,12 +764,22 @@ if __name__ == '__main__':
     tree = ID3DecisionTree()
 
     # Load learning data
-    data = pd.read_excel(args.training_data).to_numpy()
+    if args.training_data.endswith('xlsx'):
+        data = pd.read_excel(args.training_data).to_numpy()
+    elif args.training_data.endswith('txt'):
+        data = np.loadtxt(args.training_data,)
+
     testing_set = data
     learning_set = data[0, :]
 
+    # Reshape learning set to col vector
+    if len(learning_set.shape) == 1:
+        learning_set = np.expand_dims(learning_set, axis=0)
+
     LOG.debug('\nIn __main__')
+    LOG.debug(learning_set.shape)
     LOG.debug(learning_set)
+    breakpoint()
 
     # Train tree
     LOG.debug('\nTraining decision tree!')
