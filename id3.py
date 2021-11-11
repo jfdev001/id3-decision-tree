@@ -171,11 +171,20 @@ class ID3DecisionTree:
         # Add the learning set to the node
         node.set_learning_set(learning_set=learning_set)
 
+        # LOG
+        LOG.debug(node.get_labels())
+
         # Compute the counts of each category of the label
         label_counts = np.unique(node.get_labels(), return_counts=True)[-1]
 
+        LOG.debug(label_counts)
+
         # Compute entropy of subset
         learning_set_entropy = self.__entropy(label_counts)
+
+        # LOGGING
+        LOG.debug('\nLearning Set Entropy:' + str(learning_set_entropy))
+        breakpoint()
 
         # Entropy is 0 for data, therefore all records
         # have same value for categorical attribute
@@ -188,8 +197,6 @@ class ID3DecisionTree:
 
             LOG.debug('\nIn `if learning_set_entropy == 0`')
             LOG.debug(node)
-
-            exit()
 
             # # Consider how this recurses... it can only return
             # # a node if the node is a leaf node..., this means
