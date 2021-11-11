@@ -420,6 +420,7 @@ class ID3DecisionTree:
 
         # Recursive traversal -- at least one of the attributes
         # should be in the current nodes attribute
+        LOG.debug(node)
         if node.get_attribute() in attributes:
 
             # Consider a row vector...
@@ -429,25 +430,29 @@ class ID3DecisionTree:
             # indexing the i^th attribute gives the category (or value)
             # associated with that particular attribute
             category = row_vector[node.get_attribute()]
+            LOG.debug(category)
 
-            # Iterate through the children of the current node
             for child in node.get_children():
 
-                # If a child's category matches the currently observed
-                # row vector category, check to see if there is a decision for
-                # such a category, otherwise recursively call function
-                if category == child.get_category():
-                    if child.get_decision() is not None:
-                        return child.get_decision()
-                    else:
-                        self.traverse_tree(
-                            row_vector=row_vector,
-                            node=child)
+                if category == child.get_category() and not child.is_leaf():
+                    self.traverse_tree(row_vector=row_vector, node=child)
 
+                elif category == child.get_category() and child.is_leaf():
+
+                    LOG.debug('At Leaf:')
+                    LOG.debug(child)
+                    LOG.debug('Returning!!')
+                    return child.get_decision()
+
+                elif category != child.get_category():
+                    LOG.debug(f'{category} != {child.get_category()}')
         else:
             raise ValueError(
-                ':param row_vector: does not have an attribute that matches \
-                    the decision tree`s node')
+                ':param row_vector: does not have an attribute that matches'
+                + ' the decision tree`s node')
+
+        # Is anything here called??
+        LOG.debug('End of function call... default return None')
 
     # TODO: Remove
     def entropy(self, obj_counts: list) -> float:
@@ -685,6 +690,11 @@ class ID3DecisionTree:
         return sum((sum(c_i) / total_num_labels) * self.__entropy(c_i)
                    for c_i in subset_counts)
 
+    def get_root(self,):
+        """Gets the root of the tree."""
+
+        return self.root
+
 
 if __name__ == '__main__':
 
@@ -733,6 +743,9 @@ if __name__ == '__main__':
     # TODO: Remove -- display tree
     tree.display_tree()
 
-    # Test tree
+    # Test tree traversal
+    for row_vector in learning_set:
+        LOG.debug('\n' + str(row_vector[: -1]))
+        LOG.debug(tree.traverse_tree(row_vector[: -1], tree.get_root()))
 
     # Output number of testing examples that are correct
