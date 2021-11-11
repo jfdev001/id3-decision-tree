@@ -177,6 +177,9 @@ class ID3DecisionTree:
         if learning_set_entropy == 0:
             node.set_unanimous_decision()
 
+            LOG.debug('\nIn `if learning_set_entropy == 0`')
+            LOG.debug(node)
+
             exit()
 
             # # Consider how this recurses... it can only return
@@ -281,10 +284,8 @@ class ID3DecisionTree:
                 LOG.debug(learning_subset)
                 LOG.debug('\n')
 
-                # node.add_child(child_node)
-                # self.__id3(learning_set=learning_subset, node=child_node)
-
-            exit()
+                node.add_child(child_node)
+                self.__id3(learning_set=learning_subset, node=child_node)
 
         # Returns nothing since the calling function passes the
         # root node by obj-ref
