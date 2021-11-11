@@ -284,6 +284,9 @@ class ID3DecisionTree:
                 LOG.debug(learning_subset)
                 LOG.debug('\n')
 
+                # TODO: Deal with recursion issue and building
+                # the tree...
+
                 node.add_child(child_node)
                 self.__id3(learning_set=learning_subset, node=child_node)
 
