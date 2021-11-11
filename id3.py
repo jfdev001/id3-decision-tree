@@ -66,8 +66,10 @@ class TreeNode:
 
     def get_labels(self,) -> np.ndarray:
         """Returns the labels for all rows."""
-
-        return self.learning_set[:, -1]
+        if len(self.learning_set.shape) == 2:
+            return self.learning_set[:, -1]
+        elif len(self.learning_set.shape) == 1:
+            return self.learning_set[-1]
 
     def set_learning_set(self, learning_set):
         """Sets the learning set for node."""
@@ -179,24 +181,40 @@ class ID3DecisionTree:
 
         self.__id3(learning_set=learning_set, node=self.root)
 
-    def __id3(self, learning_set: np.ndarray, node: TreeNode, given=None) -> None:
+    def __id3(self,
+              learning_set: np.ndarray,
+              node: TreeNode,
+              given=None) -> None:
         """Create the ID3DecisionTree.
 
         :param learning_set: The set containing all variables
             (features and labels). The learning_set must only have a
             single label. The label MUST be the last element in a given
             row, i.e., the final (-1) column for all rows in the set.
-        :param node:
-        :param given:
+        :param node: <class 'TreeNode'>
+        :param given: The attribute value in the learning subset
+            which is to be ignored during information gain calculations.
 
-        :return: A tree node.
+        TODO: continuous: bool
+
+        :return: None
         """
 
+        # Learning is just a row vector??? data.shape -> len((,)) < 2
+        # then you have only a row vector. np.array[learning_set]
+        # converts row vector into column vector...
+        # if len(learning_set.shape) < 2:
+        #     data = np.array([learning_set])
+
         # Sort the learning set if there is continuous data
-        pass
+        # sorted_indices = np.argsort(learning_set)
 
         # Discretize the data -- >= instead of >
         pass
+
+        # Want to keep the original learning set
+        # this is because if you don't, then you will have issues
+        # with dividing subsets based on categories...
 
         # Add the learning set to the node
         node.set_learning_set(learning_set=learning_set)
@@ -432,6 +450,11 @@ class ID3DecisionTree:
         category = row_vector[node.get_attribute()]
         LOG.debug(category)
 
+        # Special case
+        if node.is_root() and node.is_leaf():
+            return node.get_decision()
+
+        # All other cases where children are generated
         for child in node.get_children():
 
             # Base case
@@ -450,12 +473,6 @@ class ID3DecisionTree:
         #     raise ValueError(
         #         ':param row_vector: does not have an attribute that matches'
         #         + ' the decision tree`s node')
-
-        # return child.get_decision()
-
-        # Is anything here called??
-        LOG.debug('End of function call... default return None')
-        LOG.debug(child)
 
     # TODO: Remove
     def entropy(self, obj_counts: list) -> float:
@@ -732,7 +749,7 @@ if __name__ == '__main__':
     tree = ID3DecisionTree()
 
     # Load learning data
-    learning_set = pd.read_excel(args.training_data).to_numpy()
+    learning_set = pd.read_excel(args.training_data).to_numpy()[0, :]
 
     LOG.debug('\nIn __main__')
     LOG.debug(learning_set)
@@ -747,17 +764,22 @@ if __name__ == '__main__':
     tree.display_tree()
 
     # Test tree traversal
-    preds = np.empty(shape=(learning_set.shape[0], ), dtype=object)
-    ix = 0
-    for row_vector in learning_set:
-        LOG.debug('\n' + str(row_vector[: -1]))
-        pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
-        LOG.debug(pred)
-        preds[ix] = pred
-        ix += 1
+    if len(learning_set.shape) == 2:
+        preds = np.empty(shape=(learning_set.shape[0], ), dtype=object)
+        ix = 0
+        for row_vector in learning_set:
+            LOG.debug('\n' + str(row_vector[: -1]))
+            pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
+            LOG.debug(pred)
+            preds[ix] = pred
+            ix += 1
 
-    LOG.debug('Do the predictions and targets match?')
-    LOG.debug(
-        f'{np.count_nonzero(preds == learning_set[:, -1])} / {learning_set.shape[0]}')
+        LOG.debug('Do the predictions and targets match?')
+        LOG.debug(
+            f'{np.count_nonzero(preds == learning_set[:, -1])} / {learning_set.shape[0]}')
+    elif len(learning_set.shape) == 1:
+        pred = tree.traverse_tree(
+            row_vector=learning_set[: -1], node=tree.get_root())
+        LOG.debug(f'Prediction: {pred} -- Target: {learning_set[-1]}')
 
     # Output number of testing examples that are correct

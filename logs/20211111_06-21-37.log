@@ -1,0 +1,21 @@
+
+In __main__
+['sunny' 'hot' 'high' 'Weak' 'N']
+
+Labels:
+N
+Label counts:
+[1]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x219d3a9fc70: (attribute=None, category=None, decision=N)
+---------------------------------
+[None:None:N]
+<class '__main__.TreeNode'> object at 0x219d3a9fc70: (attribute=None, category=None, decision=N)
+[['sunny' 'hot' 'high' 'Weak']]
+Prediction: N -- Target: N
