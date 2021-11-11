@@ -19,16 +19,18 @@ import math
 
 
 class Node:
-    def __init__(
-            self, value=None):
+    def __init__(self, category=None):
         """Define state for Node.
 
-        :param value:
+        :param category: <class 'str'> or <class 'int'> 
+        Attributes consist of unique (discrete) 
+        categories. E.g., if self.attribute = outlook,
+        then category for node is in {sunny, overcast, rain}. For
+        cancer or iris dataset, the category will be the numpy interval.
         """
 
-        self.value = value
-
         self.attribute = None
+        self.category = category
         self.learning_set = None
         self.children = []
         self.decision = None
@@ -38,7 +40,7 @@ class Node:
 
         self.children.append(node)
 
-    def get_children(self,):
+    def get_children(self,) -> list["Node"]:
         """Returns the list of children of the node."""
 
         return self.children
@@ -48,10 +50,15 @@ class Node:
 
         return self.attribute
 
-    def get_value(self,):
+    def get_category(self,):
         """Returns the value of the node."""
 
-        return self.value
+        return self.category
+
+    def get_decision(self,):
+        """Returns the decision of the node."""
+
+        return self.decision
 
     def get_labels(self,) -> np.ndarray:
         """Returns the labels for all rows."""
@@ -86,7 +93,7 @@ class Node:
         or value associated with it.
         """
 
-        return self.attribute is None and self.value is None
+        return self.attribute is None and self.category is None
 
     def is_leaf(self,) -> bool:
         """Returns bool for whether node is leaf.
@@ -119,6 +126,7 @@ class Node:
 
         rep = f'{self.__class__} object at {hex(id(self))}:'
         rep += f' (attribute={self.attribute},'
+        rep += f' category={self.category},'
         rep += f' decision={self.decision})'
         return rep
 
@@ -273,8 +281,18 @@ class ID3DecisionTree:
                 # Append the subset to the list
                 best_category_learning_sets.append(best_category_learning_set)
 
-            # For each of the subsets, create a child node
-            child_nodes = [Node()
+            # For each of the subsets, create a child node with the
+            # associated category...
+            # this way children will have attribute: category
+            # and when testing, the traversal will search each
+            # child until the correct category is found....
+            # e.g.,
+            #           node(attribute=outlook, children=[addresses of child_1-3], category=None)
+            #           /              |                   \ # Visit children until the target category
+            #         node(           node(             node(
+            # attribute=humidity,     attribute=None       attribute=wind
+            # category=sunny)         category=overcast)   category=rain)
+            child_nodes = [Node(category=best_feature_categories[i])
                            for i in range(len(best_category_learning_sets))]
 
             # Add the child nodes to the current node and call id3
@@ -302,6 +320,68 @@ class ID3DecisionTree:
         :return:
         """
         pass
+
+    def traverse_tree(
+            self,
+            row_vector: np.ndarray or list or tuple,  # or pd.DataFrame
+            node: Node) -> str or int or bool:
+        """Recursive traversal of tree until a decision returned.
+
+        :param row_vector: Vector of features.
+        :param node: <class 'Node'>
+
+        :return: The decision for the row vector.
+        """
+
+        # Set attribute identifiers based on row vector type...
+        # attribute identifiers will be indices if not dataframe, if dataframe
+        # the attribute identifiers will be the column names...
+        # an attribute identifier might be 'outlook' or it might just
+        # be the index of a given column
+        if isinstance(row_vector, np.ndarray) \
+                or isinstance(row_vector, list) \
+                or isinstance(row_vector, tuple):
+            attributes = range(len(row_vector))
+
+        # # TODO: Might be interesting to include processing of dataframe
+        # # later...
+        # elif isinstance(row_vector, pd.DataFrame):
+        #     attributes = row_vector.columns
+        # else:
+        #     raise TypeError(
+        #         ':param row_vector: must be array like or \
+        #             or <class `pandas.DataFrame`>')
+
+        # Recursive traversal -- at least one of the attributes
+        # should be in the current nodes attribute
+        if node.get_attribute() in attributes:
+
+            # Consider a row vector...
+            #  A_i = A1         A2          A3
+            #       [A1_cat     A2_cat      A3_cat]
+            # Each attribute has categories corresponding to it, and
+            # indexing the i^th attribute gives the category (or value)
+            # associated with that particular attribute
+            category = row_vector[node.get_attribute()]
+
+            # Iterate through the children of the current node
+            for child in node.get_children():
+
+                # If a child's category matches the currently observed
+                # row vector category, check to see if there is a decision for
+                # such a category, otherwise recursively call function
+                if category == child.get_category():
+                    if child.get_decision() is not None:
+                        return child.get_decision()
+                    else:
+                        self.traverse_tree(
+                            row_vector=row_vector,
+                            node=child)
+
+        else:
+            raise ValueError(
+                ':param row_vector: does not have an attribute that matches \
+                    the decision tree`s node')
 
     # TODO: Remove
     def entropy(self, obj_counts: list) -> float:
