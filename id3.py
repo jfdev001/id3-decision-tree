@@ -17,6 +17,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import math
+from copy import deepcopy
 
 # TODO: Remove
 from anytree import Node, RenderTree
@@ -749,25 +750,31 @@ if __name__ == '__main__':
     tree = ID3DecisionTree()
 
     # Load learning data
-    learning_set = pd.read_excel(args.training_data).to_numpy()[0, :]
+    data = pd.read_excel(args.training_data).to_numpy()
+    testing_set = data
+    learning_set = data[0, :]
 
     LOG.debug('\nIn __main__')
     LOG.debug(learning_set)
 
-    # Load testing data
-    testing_set = None
-
     # Train tree
+    LOG.debug('\nTraining decision tree!')
     tree.decision_tree_learning(learning_set=learning_set)
 
     # TODO: Remove -- display tree
     tree.display_tree()
 
     # Test tree traversal
-    if len(learning_set.shape) == 2:
-        preds = np.empty(shape=(learning_set.shape[0], ), dtype=object)
+    LOG.debug('-----------------------')
+    LOG.debug('\nTesting!!!')
+    LOG.debug('-----------------------')
+
+    if len(testing_set.shape) == 2:
+
+        preds = np.empty(shape=(testing_set.shape[0], ), dtype=object)
         ix = 0
-        for row_vector in learning_set:
+
+        for row_vector in testing_set:
             LOG.debug('\n' + str(row_vector[: -1]))
             pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
             LOG.debug(pred)
@@ -776,10 +783,15 @@ if __name__ == '__main__':
 
         LOG.debug('Do the predictions and targets match?')
         LOG.debug(
-            f'{np.count_nonzero(preds == learning_set[:, -1])} / {learning_set.shape[0]}')
-    elif len(learning_set.shape) == 1:
+            f'{np.count_nonzero(preds == testing_set[:, -1])} / {learning_set.shape[0]}')
+
+    elif len(testing_set.shape) == 1:
+
+        LOG.debug(str(testing_set))
+
         pred = tree.traverse_tree(
-            row_vector=learning_set[: -1], node=tree.get_root())
-        LOG.debug(f'Prediction: {pred} -- Target: {learning_set[-1]}')
+            row_vector=testing_set[: -1], node=tree.get_root())
+
+        LOG.debug(f'Prediction: {pred} -- Target: {testing_set[-1]}')
 
     # Output number of testing examples that are correct

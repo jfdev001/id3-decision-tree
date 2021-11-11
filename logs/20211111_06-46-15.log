@@ -1,0 +1,96 @@
+
+In __main__
+['sunny' 'hot' 'high' 'Weak' 'N']
+
+Training decision tree!
+
+Labels:
+N
+Label counts:
+[1]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+---------------------------------
+[None:None:N]
+-----------------------
+
+Testing!!!
+-----------------------
+
+['sunny' 'hot' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['sunny' 'hot' 'high' 'Weak']]
+N
+
+['sunny' 'hot' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['sunny' 'hot' 'high' 'Strong']]
+N
+
+['overcast' 'hot' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['overcast' 'hot' 'high' 'Weak']]
+N
+
+['rain' 'mild' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['rain' 'mild' 'high' 'Weak']]
+N
+
+['rain' 'cool' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['rain' 'cool' 'normal' 'Weak']]
+N
+
+['rain' 'cool' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['rain' 'cool' 'normal' 'Strong']]
+N
+
+['overcast' 'cool' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['overcast' 'cool' 'normal' 'Strong']]
+N
+
+['sunny' 'mild' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['sunny' 'mild' 'high' 'Weak']]
+N
+
+['sunny' 'cool' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['sunny' 'cool' 'normal' 'Weak']]
+N
+
+['rain' 'mild' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['rain' 'mild' 'normal' 'Weak']]
+N
+
+['sunny' 'mild' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['sunny' 'mild' 'normal' 'Strong']]
+N
+
+['overcast' 'mild' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['overcast' 'mild' 'high' 'Strong']]
+N
+
+['overcast' 'hot' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['overcast' 'hot' 'normal' 'Weak']]
+N
+
+['rain' 'mild' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x23ac3b8e0a0: (attribute=None, category=None, decision=N)
+[['rain' 'mild' 'high' 'Strong']]
+N
+Do the predictions and targets match?
+5 / 5
