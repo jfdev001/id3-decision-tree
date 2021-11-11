@@ -112,6 +112,15 @@ class TreeNode:
 
         return len(self.children) == 0
 
+    def all_features_equal(self,) -> bool:
+        """Returns a bool for whether all attributes are the same.
+
+        Compares all values of features in the learning set at all rows and
+        a single value of the first feature of the first row.
+        """
+
+        return np.all(self.learning_set[:, :-1] == self.learning_set[0, 0])
+
     def __get_unanimous_decision(self,):
         """Returns a single element of the label subset if all labels are equal."""
 
@@ -187,13 +196,18 @@ class ID3DecisionTree:
     def __id3(self,
               learning_set: np.ndarray,
               node: TreeNode,
-              given=None) -> None:
+              given=None,
+              continuous=False) -> None:
         """Create the ID3DecisionTree.
 
         Potential discrete layouts
 
         H(learning_set) = 0 -> Terminal Node Unananimously
-        Compute Split Points
+
+        Split Data Into Discrete Categories.
+
+        Humidity:   0.
+        PlayTennis:
 
         :param learning_set: The set containing all variables
             (features and labels). The learning_set must only have a
@@ -213,19 +227,6 @@ class ID3DecisionTree:
         # converts row vector into column vector...
         # if len(learning_set.shape) < 2:
         #     data = np.array([learning_set])
-
-        # Sort the learning set if there is continuous data
-        # sorted_indices = np.argsort(learning_set)
-        sorted_feature_label_sets = [self.sort_arr(
-            learning_set[:, [feature, -1]]) for feature in range(learning_set.shape[-1] - 1)]
-
-        # Discretize the data
-        discretized_feature_label_set = [
-            self.discretize_continuous_data(sorted_feature_label_set)
-            for sorted_feature_label_set in sorted_feature_label_sets]
-
-        LOG.debug(str(discretized_feature_label_set))
-        breakpoint()
 
         # Want to keep the original learning set
         # this is because if you don't, then you will have issues
@@ -267,24 +268,33 @@ class ID3DecisionTree:
             LOG.debug(node)
             LOG.debug('---------------------------------')
 
-            # # Consider how this recurses... it can only return
-            # # a node if the node is a leaf node..., this means
-            # # if the root has children, then the root node
-            # # will not be returned to the calling function,
-            # # thus self.root will not be set...
-
-            # return tree_node
+        elif node.all_features_equal():
+            pass
 
         # If not 0, compute information gain
         # for each attribute and find attribute with max IG(S, A)
         # create child node of the root
-        elif learning_set_entropy != 0:
+
+        # Discretization must occur
+        else:
+
+            if continuous:
+                LOG.debug('\Data is continuous:')
+                # Sort the learning set if there is continuous data
+                # sorted_indices = np.argsort(learning_set)
+                sorted_feature_label_sets = [self.sort_arr(
+                    learning_set[:, [feature, -1]]) for feature in range(learning_set.shape[-1] - 1)]
+
+                # Discretize the data
+                discretized_feature_label_set = [
+                    self.discretize_continuous_data(sorted_feature_label_set)
+                    for sorted_feature_label_set in sorted_feature_label_sets]
 
             # List that holds the information gain of each feature
             info_gain_lst = []
 
             # For each feature in the learning set, find the number
-            # of the feature that belongs to each of the label
+            # of the feature categories that belongs to each of the label
             # categories, compute the information expected information
             # gain, compute the actual information gain, then
             # add that information gain to the list
@@ -770,7 +780,7 @@ if __name__ == '__main__':
         data = np.loadtxt(args.training_data,)
 
     testing_set = data
-    learning_set = data[0, :]
+    learning_set = data
 
     # Reshape learning set to col vector
     if len(learning_set.shape) == 1:
@@ -779,14 +789,16 @@ if __name__ == '__main__':
     LOG.debug('\nIn __main__')
     LOG.debug(learning_set.shape)
     LOG.debug(learning_set)
-    breakpoint()
 
     # Train tree
     LOG.debug('\nTraining decision tree!')
     tree.decision_tree_learning(learning_set=learning_set)
 
     # TODO: Remove -- display tree
+    LOG.debug('\n-----------------------')
+    LOG.debug('TREE')
     tree.display_tree()
+    LOG.debug('\n-----------------------')
 
     # Test tree traversal
     LOG.debug('-----------------------')
@@ -807,7 +819,7 @@ if __name__ == '__main__':
 
         LOG.debug('Do the predictions and targets match?')
         LOG.debug(
-            f'{np.count_nonzero(preds == testing_set[:, -1])} / {learning_set.shape[0]}')
+            f'{np.count_nonzero(preds == testing_set[:, -1])} / {testing_set.shape[0]}')
 
     elif len(testing_set.shape) == 1:
 
@@ -816,6 +828,6 @@ if __name__ == '__main__':
         pred = tree.traverse_tree(
             row_vector=testing_set[: -1], node=tree.get_root())
 
-        LOG.debug(f'Prediction: {pred} -- Target: {testing_set[-1]}')
+        LOG.debug(f'Prediction: {pred} -- Target: {testing_set.shape[0]}')
 
     # Output number of testing examples that are correct
