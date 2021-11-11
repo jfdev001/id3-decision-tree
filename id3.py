@@ -18,10 +18,13 @@ import numpy as np
 import pandas as pd
 import math
 
+# TODO: Remove
+from anytree import Node, RenderTree
 
-class Node:
+
+class TreeNode:
     def __init__(self, category=None):
-        """Define state for Node.
+        """Define state for TreeNode.
 
         :param category: <class 'str'> or <class 'int'>
         Attributes consist of unique (discrete)
@@ -41,7 +44,7 @@ class Node:
 
         self.children.append(node)
 
-    def get_children(self,) -> list[Node]:
+    def get_children(self,) -> list[TreeNode]:
         """Returns the list of children of the node."""
 
         return self.children
@@ -131,6 +134,9 @@ class Node:
         rep += f' decision={self.decision})'
         return rep
 
+    def name(self,):
+        return f'[{self.attribute}:{self.category}:{self.decision}]'
+
 
 class ID3DecisionTree:
     """ID3 Decision Tree."""
@@ -139,7 +145,29 @@ class ID3DecisionTree:
         """Define state for ID3DecisionTree."""
 
         # The root of the tree
-        self.root = Node()
+        self.root = TreeNode()
+
+    # TODO: Remove
+    def display_tree(self):
+        anytree = self.convert_tree_to_anytree(self.root)
+        for pre, fill, node in RenderTree(anytree):
+            # pre = pre.encode(encoding='UTF-8', errors='strict')
+            LOG.debug("%s%s" % (pre, node.name))
+
+    # TODO: Remove
+    def convert_tree_to_anytree(self, tree: TreeNode):
+        anytree = Node(tree.name())
+        self.attach_children(tree, anytree)
+        return anytree
+
+    # TODO: Remove
+    # Attach the children from the decision tree into the anytree
+    # tree format.
+    def attach_children(self, parent_node: TreeNode, parent_anytree_node: Node):
+        for child_node in parent_node.get_children():
+            child_anytree_node = Node(
+                child_node.name(), parent=parent_anytree_node)
+            self.attach_children(child_node, child_anytree_node)
 
     def decision_tree_learning(self, learning_set: np.ndarray) -> None:
         """Helper function for ID3 decision tree learning.
@@ -151,7 +179,7 @@ class ID3DecisionTree:
 
         self.__id3(learning_set=learning_set, node=self.root)
 
-    def __id3(self, learning_set: np.ndarray, node: Node, given=None) -> None:
+    def __id3(self, learning_set: np.ndarray, node: TreeNode, given=None) -> None:
         """Create the ID3DecisionTree.
 
         :param learning_set: The set containing all variables
@@ -189,7 +217,6 @@ class ID3DecisionTree:
 
         # LOGGING
         LOG.debug('\nLearning Set Entropy:' + str(learning_set_entropy))
-        breakpoint()
 
         # Entropy is 0 for data, therefore all records
         # have same value for categorical attribute
@@ -271,7 +298,7 @@ class ID3DecisionTree:
 
             # Should set the attribute of the current node
             # to this best feature ix per the pseudocode
-            # "Decision Tree Attribute for Root (Node) = A"
+            # "Decision Tree Attribute for Root (TreeNode) = A"
             # from https://en.wikipedia.org/wiki/ID3_algorithm#cite_note-1
             node.set_attribute(attribute=best_feature_ix)
 
@@ -327,7 +354,7 @@ class ID3DecisionTree:
             #         node(           node(             node(
             # attribute=humidity,     attribute=None       attribute=wind
             # category=sunny)         category=overcast)   category=rain)
-            child_nodes = [Node(category=best_feature_categories[i])
+            child_nodes = [TreeNode(category=best_feature_categories[i])
                            for i in range(len(best_category_learning_sets))]
 
             # Add the child nodes to the current node and call id3
@@ -363,11 +390,11 @@ class ID3DecisionTree:
     def traverse_tree(
             self,
             row_vector: np.ndarray or list or tuple,  # or pd.DataFrame
-            node: Node) -> str or int or bool:
+            node: TreeNode) -> str or int or bool:
         """Recursive traversal of tree until a decision returned.
 
         :param row_vector: Vector of features.
-        :param node: <class 'Node'>
+        :param node: <class 'TreeNode'>
 
         :return: The decision for the row vector.
         """
@@ -672,6 +699,10 @@ if __name__ == '__main__':
         help='path to txt file with testing data for ID3 decision tree.')
     args = parser.parse_args()
 
+    print('------------------------')
+    print('MUST REMOVE ANYTREE')
+    print('------------------------')
+
     # TODO: Remove Logging
     global LOG
     LOG = logging.getLogger()
@@ -679,7 +710,7 @@ if __name__ == '__main__':
     dtime_lst = str(datetime.datetime.now()).split(' ')
     dtime = dtime_lst[0].replace('-', '') + '_' + \
         dtime_lst[1].replace(':', '-')[: dtime_lst[1].find('.')]
-    file_out = logging.FileHandler('./logs/' + dtime + '.log')
+    file_out = logging.FileHandler('./logs/' + dtime + '.log', 'w', 'utf-8')
     stdout = logging.StreamHandler(sys.stdout)
     LOG.addHandler(file_out)
     LOG.addHandler(stdout)
@@ -698,6 +729,9 @@ if __name__ == '__main__':
 
     # Train tree
     tree.decision_tree_learning(learning_set=learning_set)
+
+    # TODO: Remove -- display tree
+    tree.display_tree()
 
     # Test tree
 
