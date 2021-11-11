@@ -455,7 +455,7 @@ class ID3DecisionTree:
         if node.is_root() and node.is_leaf():
             return node.get_decision()
 
-        # All other cases where children are generated
+        # All other cases where children exit
         for child in node.get_children():
 
             # Base case
