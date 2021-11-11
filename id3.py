@@ -114,6 +114,14 @@ class Node:
 
         return np.all(self.get_labels() == self.get_labels()[0])
 
+    def __repr__(self,):
+        """Information about a node"""
+
+        rep = f'{self.__class__} object at {hex(id(self))}:'
+        rep += f' (attribute={self.attribute},'
+        rep += f' decision={self.decision})'
+        return rep
+
 
 class ID3DecisionTree:
     """ID3 Decision Tree."""
@@ -168,6 +176,8 @@ class ID3DecisionTree:
         # then the leaf node yields its decision attribute
         if learning_set_entropy == 0:
             node.set_unanimous_decision()
+
+            exit()
 
             # # Consider how this recurses... it can only return
             # # a node if the node is a leaf node..., this means
@@ -271,8 +281,10 @@ class ID3DecisionTree:
                 LOG.debug(learning_subset)
                 LOG.debug('\n')
 
-                node.add_child(child_node)
-                self.__id3(learning_set=learning_subset, node=child_node)
+                # node.add_child(child_node)
+                # self.__id3(learning_set=learning_subset, node=child_node)
+
+            exit()
 
         # Returns nothing since the calling function passes the
         # root node by obj-ref
@@ -549,7 +561,8 @@ if __name__ == '__main__':
     # Load learning data
     learning_set = pd.read_excel(args.training_data).to_numpy()
 
-    print(learning_set)
+    LOG.debug('\nIn __main__')
+    LOG.debug(learning_set)
 
     # Load testing data
     testing_set = None

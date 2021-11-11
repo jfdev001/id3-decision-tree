@@ -1,0 +1,42 @@
+
+In __main__
+[['sunny' 'hot' 'high' False 'N']
+ ['sunny' 'hot' 'high' True 'N']
+ ['overcast' 'hot' 'high' False 'P']
+ ['rain' 'mild' 'high' False 'P']
+ ['rain' 'cool' 'normal' False 'P']
+ ['rain' 'cool' 'normal' True 'N']
+ ['overcast' 'cool' 'normal' True 'P']
+ ['sunny' 'mild' 'high' False 'N']
+ ['sunny' 'cool' 'normal' False 'P']
+ ['rain' 'mild' 'normal' False 'P']
+ ['sunny' 'mild' 'normal' True 'P']
+ ['overcast' 'mild' 'high' True 'P']
+ ['overcast' 'hot' 'normal' False 'P']
+ ['rain' 'mild' 'high' True 'N']]
+
+
+0
+<class '__main__.Node'> object at 0x19c0b2c0bb0: (attribute=None, decision=None)
+[['overcast' 'hot' 'high' False 'P']
+ ['overcast' 'cool' 'normal' True 'P']
+ ['overcast' 'mild' 'high' True 'P']
+ ['overcast' 'hot' 'normal' False 'P']]
+
+
+<class '__main__.Node'> object at 0x19c0abac250: (attribute=None, decision=None)
+[['rain' 'mild' 'high' False 'P']
+ ['rain' 'cool' 'normal' False 'P']
+ ['rain' 'cool' 'normal' True 'N']
+ ['rain' 'mild' 'normal' False 'P']
+ ['rain' 'mild' 'high' True 'N']]
+
+
+<class '__main__.Node'> object at 0x19c0abac280: (attribute=None, decision=None)
+[['sunny' 'hot' 'high' False 'N']
+ ['sunny' 'hot' 'high' True 'N']
+ ['sunny' 'mild' 'high' False 'N']
+ ['sunny' 'cool' 'normal' False 'P']
+ ['sunny' 'mild' 'normal' True 'P']]
+
+
