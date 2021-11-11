@@ -1,0 +1,197 @@
+
+In __main__
+(21, 5)
+[['sunny' 'hot' 'high' 'Weak' 'N']
+ ['sunny' 'hot' 'high' 'Strong' 'N']
+ ['overcast' 'hot' 'high' 'Weak' 'P']
+ ['rain' 'mild' 'high' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Strong' 'N']
+ ['overcast' 'cool' 'normal' 'Strong' 'P']
+ ['sunny' 'mild' 'high' 'Weak' 'N']
+ ['sunny' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'normal' 'Weak' 'P']
+ ['sunny' 'mild' 'normal' 'Strong' 'P']
+ ['overcast' 'mild' 'high' 'Strong' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'high' 'Strong' 'N']
+ ['sunny' 'mild' 'high' 'Weak' 'M']
+ ['sunny' 'cool' 'normal' 'Weak' 'M']
+ ['rain' 'mild' 'normal' 'Weak' 'M']
+ ['sunny' 'mild' 'normal' 'Strong' 'C']
+ ['overcast' 'mild' 'high' 'Strong' 'C']
+ ['overcast' 'hot' 'normal' 'Weak' 'C']
+ ['rain' 'mild' 'high' 'Strong' 'C']]
+
+Training decision tree!
+
+Labels:
+['N' 'N' 'P' 'P' 'P' 'N' 'P' 'N' 'P' 'P' 'P' 'P' 'P' 'N' 'M' 'M' 'M' 'C'
+ 'C' 'C' 'C']
+Label counts:
+[4 3 5 9]
+
+Learning Set Entropy:1.873562518512994
+
+subset_counts
+[2, 0, 0, 4]
+[1, 1, 2, 3]
+[1, 2, 3, 2]
+
+subset_counts
+[0, 1, 1, 3]
+[1, 0, 2, 2]
+[3, 2, 2, 4]
+
+subset_counts
+[2, 1, 4, 3]
+[2, 2, 1, 6]
+
+subset_counts
+[3, 0, 3, 3]
+[1, 3, 2, 6]
+
+Information gain list:
+[0.2711108778271263, 0.17055043520075808, 0.11125936387520885, 0.20596489905328585]
+
+
+Best feature index (i.e., attribute):0
+
+
+<class '__main__.TreeNode'> object at 0x16cfea65580: (attribute=None, category=overcast, decision=None)
+Learning subset given Feature `0`: Category `overcast`
+[['overcast' 'hot' 'high' 'Weak' 'P']
+ ['overcast' 'cool' 'normal' 'Strong' 'P']
+ ['overcast' 'mild' 'high' 'Strong' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'P']
+ ['overcast' 'mild' 'high' 'Strong' 'C']
+ ['overcast' 'hot' 'normal' 'Weak' 'C']]
+
+
+
+Labels:
+['P' 'P' 'P' 'P' 'C' 'C']
+Label counts:
+[2 4]
+
+Learning Set Entropy:0.9182958340544896
+
+subset_counts
+[0, 1]
+[1, 2]
+[1, 1]
+
+subset_counts
+[1, 2]
+[1, 2]
+
+subset_counts
+[1, 2]
+[1, 2]
+
+Information gain list:
+[-inf, 0.12581458369391152, 0.0, 0.0]
+
+
+Best feature index (i.e., attribute):1
+
+
+<class '__main__.TreeNode'> object at 0x16cff1a3f40: (attribute=None, category=cool, decision=None)
+Learning subset given Feature `1`: Category `cool`
+[['overcast' 'cool' 'normal' 'Strong' 'P']]
+
+
+
+Labels:
+['P']
+Label counts:
+[1]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x16cff1a3f40: (attribute=None, category=cool, decision=P)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x16cff1a38e0: (attribute=None, category=hot, decision=None)
+Learning subset given Feature `1`: Category `hot`
+[['overcast' 'hot' 'high' 'Weak' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'C']]
+
+
+
+Labels:
+['P' 'P' 'C']
+Label counts:
+[1 2]
+
+Learning Set Entropy:0.9182958340544896
+
+subset_counts
+[1, 2]
+
+subset_counts
+[0, 1]
+[1, 1]
+
+subset_counts
+[1, 2]
+
+Information gain list:
+[0.0, -inf, 0.2516291673878229, 0.0]
+
+
+Best feature index (i.e., attribute):2
+
+
+<class '__main__.TreeNode'> object at 0x16cff1a3e80: (attribute=None, category=high, decision=None)
+Learning subset given Feature `2`: Category `high`
+[['overcast' 'hot' 'high' 'Weak' 'P']]
+
+
+
+Labels:
+['P']
+Label counts:
+[1]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x16cff1a3e80: (attribute=None, category=high, decision=P)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x16cff1adf10: (attribute=None, category=normal, decision=None)
+Learning subset given Feature `2`: Category `normal`
+[['overcast' 'hot' 'normal' 'Weak' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'C']]
+
+
+
+Labels:
+['P' 'C']
+Label counts:
+[1 1]
+
+Learning Set Entropy:1.0
+
+subset_counts
+[1, 1]
+
+subset_counts
+[1, 1]
+
+subset_counts
+[1, 1]
+
+Information gain list:
+[0.0, 0.0, -inf, 0.0]

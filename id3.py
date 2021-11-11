@@ -339,6 +339,11 @@ class ID3DecisionTree:
             LOG.debug(str(info_gain_lst))
             best_feature_ix = np.argmax(info_gain_lst)
 
+            # Check to see if info gain is same for features...
+            # make majority vote node if so...
+            if self.__same_information_gain(info_gain_lst, given=given):
+                breakpoint()
+
             # Should set the attribute of the current node
             # to this best feature ix per the pseudocode
             # "Decision Tree Attribute for Root (TreeNode) = A"
@@ -420,15 +425,6 @@ class ID3DecisionTree:
         # Returns nothing since the calling function passes the
         # root node by obj-ref
         return
-
-    def test_tree(self,):
-        """Test the ID3DecisionTree.
-
-        :param:
-
-        :return:
-        """
-        pass
 
     def traverse_tree(
             self,
@@ -591,6 +587,17 @@ class ID3DecisionTree:
             return discretized_arr, bins
         else:
             return discretized_arr
+
+    def __same_information_gain(self, information_gain_lst, given=None) -> bool:
+        """Return bool for whether all values of information gain are the same."""
+
+        if given is not None:
+            sliced_information_gain_lst = [information_gain_lst[ix] for ix in range(
+                len(information_gain_lst)) if ix != given]
+        else:
+            sliced_information_gain_lst = information_gain_lst
+
+        return np.all(sliced_information_gain_lst == sliced_information_gain_lst[0])
 
     def __get_threshold_indices(self, attr_label_arr: np.ndarray) -> list[tuple]:
         """Returns list of indices where adjacent labels differ.
