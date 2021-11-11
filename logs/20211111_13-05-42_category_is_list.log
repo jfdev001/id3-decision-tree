@@ -1,0 +1,388 @@
+
+In __main__
+(14, 5)
+[['sunny' 'hot' 'high' 'Weak' 'N']
+ ['sunny' 'hot' 'high' 'Strong' 'N']
+ ['overcast' 'hot' 'high' 'Weak' 'P']
+ ['rain' 'mild' 'high' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Strong' 'N']
+ ['overcast' 'cool' 'normal' 'Strong' 'P']
+ ['sunny' 'mild' 'high' 'Weak' 'N']
+ ['sunny' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'normal' 'Weak' 'P']
+ ['sunny' 'mild' 'normal' 'Strong' 'P']
+ ['overcast' 'mild' 'high' 'Strong' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'high' 'Strong' 'N']]
+
+Training decision tree!
+
+Labels:
+['N' 'N' 'P' 'P' 'P' 'N' 'P' 'N' 'P' 'P' 'P' 'P' 'P' 'N']
+Label counts:
+[5 9]
+
+Learning Set Entropy:0.9402859586706309
+
+subset_counts
+[0, 4]
+[2, 3]
+[3, 2]
+
+subset_counts
+[1, 3]
+[2, 2]
+[2, 4]
+
+subset_counts
+[4, 3]
+[1, 6]
+
+subset_counts
+[3, 3]
+[2, 6]
+
+Information gain list:
+[0.2467498197744391, 0.029222565658954647, 0.15183550136234136, 0.04812703040826927]
+
+
+Best feature index (i.e., attribute):0
+
+
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=None)
+Learning subset given Feature `0`: Category `['overcast']`
+[['overcast' 'hot' 'high' 'Weak' 'P']
+ ['overcast' 'cool' 'normal' 'Strong' 'P']
+ ['overcast' 'mild' 'high' 'Strong' 'P']
+ ['overcast' 'hot' 'normal' 'Weak' 'P']]
+
+
+
+Labels:
+['P' 'P' 'P' 'P']
+Label counts:
+[4]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=P)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=None, category=['rain'], decision=None)
+Learning subset given Feature `0`: Category `['rain']`
+[['rain' 'mild' 'high' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Strong' 'N']
+ ['rain' 'mild' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'high' 'Strong' 'N']]
+
+
+
+Labels:
+['P' 'P' 'N' 'P' 'N']
+Label counts:
+[2 3]
+
+Learning Set Entropy:0.9709505944546686
+
+subset_counts
+[1, 1]
+[1, 2]
+
+subset_counts
+[1, 1]
+[1, 2]
+
+subset_counts
+[2, 0]
+[0, 3]
+
+Information gain list:
+[-inf, 0.01997309402197489, 0.01997309402197489, 0.9709505944546686]
+
+
+Best feature index (i.e., attribute):3
+
+
+<class '__main__.TreeNode'> object at 0x1668d6ceee0: (attribute=None, category=['Strong'], decision=None)
+Learning subset given Feature `3`: Category `['Strong']`
+[['rain' 'cool' 'normal' 'Strong' 'N']
+ ['rain' 'mild' 'high' 'Strong' 'N']]
+
+
+
+Labels:
+['N' 'N']
+Label counts:
+[2]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x1668d6ceee0: (attribute=None, category=['Strong'], decision=N)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x1668cf93df0: (attribute=None, category=['Weak'], decision=None)
+Learning subset given Feature `3`: Category `['Weak']`
+[['rain' 'mild' 'high' 'Weak' 'P']
+ ['rain' 'cool' 'normal' 'Weak' 'P']
+ ['rain' 'mild' 'normal' 'Weak' 'P']]
+
+
+
+Labels:
+['P' 'P' 'P']
+Label counts:
+[3]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x1668cf93df0: (attribute=None, category=['Weak'], decision=P)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=None, category=['sunny'], decision=None)
+Learning subset given Feature `0`: Category `['sunny']`
+[['sunny' 'hot' 'high' 'Weak' 'N']
+ ['sunny' 'hot' 'high' 'Strong' 'N']
+ ['sunny' 'mild' 'high' 'Weak' 'N']
+ ['sunny' 'cool' 'normal' 'Weak' 'P']
+ ['sunny' 'mild' 'normal' 'Strong' 'P']]
+
+
+
+Labels:
+['N' 'N' 'N' 'P' 'P']
+Label counts:
+[3 2]
+
+Learning Set Entropy:0.9709505944546686
+
+subset_counts
+[0, 1]
+[2, 0]
+[1, 1]
+
+subset_counts
+[3, 0]
+[0, 2]
+
+subset_counts
+[1, 1]
+[2, 1]
+
+Information gain list:
+[-inf, 0.5709505944546686, 0.9709505944546686, 0.01997309402197489]
+
+
+Best feature index (i.e., attribute):2
+
+
+<class '__main__.TreeNode'> object at 0x1668cf93b50: (attribute=None, category=['high'], decision=None)
+Learning subset given Feature `2`: Category `['high']`
+[['sunny' 'hot' 'high' 'Weak' 'N']
+ ['sunny' 'hot' 'high' 'Strong' 'N']
+ ['sunny' 'mild' 'high' 'Weak' 'N']]
+
+
+
+Labels:
+['N' 'N' 'N']
+Label counts:
+[3]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x1668cf93b50: (attribute=None, category=['high'], decision=N)
+---------------------------------
+
+
+<class '__main__.TreeNode'> object at 0x1668d6cee50: (attribute=None, category=['normal'], decision=None)
+Learning subset given Feature `2`: Category `['normal']`
+[['sunny' 'cool' 'normal' 'Weak' 'P']
+ ['sunny' 'mild' 'normal' 'Strong' 'P']]
+
+
+
+Labels:
+['P' 'P']
+Label counts:
+[2]
+
+Learning Set Entropy:-0.0
+
+---------------------------------
+In `if learning_set_entropy == 0`
+setting unaminous decision for node...
+node ->
+<class '__main__.TreeNode'> object at 0x1668d6cee50: (attribute=None, category=['normal'], decision=P)
+---------------------------------
+
+-----------------------
+TREE
+[0:[]:None]
+├── [None:['overcast']:P]
+├── [3:['rain']:None]
+│   ├── [None:['Strong']:N]
+│   └── [None:['Weak']:P]
+└── [2:['sunny']:None]
+    ├── [None:['high']:N]
+    └── [None:['normal']:P]
+
+-----------------------
+-----------------------
+
+Testing!!!
+-----------------------
+
+['sunny' 'hot' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+sunny
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=2, category=['sunny'], decision=None)
+high
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93b50: (attribute=None, category=['high'], decision=N)
+Returning!!
+N
+
+['sunny' 'hot' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+sunny
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=2, category=['sunny'], decision=None)
+high
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93b50: (attribute=None, category=['high'], decision=N)
+Returning!!
+N
+
+['overcast' 'hot' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+overcast
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=P)
+Returning!!
+P
+
+['rain' 'mild' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+rain
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=3, category=['rain'], decision=None)
+Weak
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93df0: (attribute=None, category=['Weak'], decision=P)
+Returning!!
+P
+
+['rain' 'cool' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+rain
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=3, category=['rain'], decision=None)
+Weak
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93df0: (attribute=None, category=['Weak'], decision=P)
+Returning!!
+P
+
+['rain' 'cool' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+rain
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=3, category=['rain'], decision=None)
+Strong
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d6ceee0: (attribute=None, category=['Strong'], decision=N)
+Returning!!
+N
+
+['overcast' 'cool' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+overcast
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=P)
+Returning!!
+P
+
+['sunny' 'mild' 'high' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+sunny
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=2, category=['sunny'], decision=None)
+high
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93b50: (attribute=None, category=['high'], decision=N)
+Returning!!
+N
+
+['sunny' 'cool' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+sunny
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=2, category=['sunny'], decision=None)
+normal
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d6cee50: (attribute=None, category=['normal'], decision=P)
+Returning!!
+P
+
+['rain' 'mild' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+rain
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=3, category=['rain'], decision=None)
+Weak
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668cf93df0: (attribute=None, category=['Weak'], decision=P)
+Returning!!
+P
+
+['sunny' 'mild' 'normal' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+sunny
+<class '__main__.TreeNode'> object at 0x1668d659580: (attribute=2, category=['sunny'], decision=None)
+normal
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d6cee50: (attribute=None, category=['normal'], decision=P)
+Returning!!
+P
+
+['overcast' 'mild' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+overcast
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=P)
+Returning!!
+P
+
+['overcast' 'hot' 'normal' 'Weak']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+overcast
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d69a1f0: (attribute=None, category=['overcast'], decision=P)
+Returning!!
+P
+
+['rain' 'mild' 'high' 'Strong']
+<class '__main__.TreeNode'> object at 0x1668cf93a00: (attribute=0, category=[], decision=None)
+rain
+<class '__main__.TreeNode'> object at 0x1668d6595b0: (attribute=3, category=['rain'], decision=None)
+Strong
+At Leaf:
+<class '__main__.TreeNode'> object at 0x1668d6ceee0: (attribute=None, category=['Strong'], decision=N)
+Returning!!
+N
+Do the predictions and targets match?
+14 / 14

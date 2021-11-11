@@ -17,25 +17,24 @@ import argparse
 import numpy as np
 import pandas as pd
 import math
-from copy import deepcopy
 
 # TODO: Remove
 from anytree import Node, RenderTree
 
 
 class TreeNode:
-    def __init__(self, category=None):
+    def __init__(self, category=None,):
         """Define state for TreeNode.
 
-        :param category: <class 'str'> or <class 'int'>
+        :param category: <class 'list'>
         Attributes consist of unique (discrete)
         categories. E.g., if self.attribute = outlook,
         then category for node is in {sunny, overcast, rain}. For
         cancer or iris dataset, the category will be the numpy interval.
         """
 
-        self.attribute = None
         self.category = category
+        self.attribute = None
         self.learning_set = None
         self.children = []
         self.decision = None
@@ -55,7 +54,8 @@ class TreeNode:
 
         return self.attribute
 
-    def get_category(self,):
+    def get_category(self,) -> str or int or pd.Interval \
+            or list[str] or list[int] or list[pd.Interval]:
         """Returns the value of the node."""
 
         return self.category
@@ -89,6 +89,11 @@ class TreeNode:
 
         self.decision = self.__get_unanimous_decision()
 
+    def set_majority_decision(self,) -> bool:
+        """Sets decision for node based on majority of labels in learning set."""
+
+        pass
+
     def set_probabilistic_decision(self,):
         """Sets decision for node based on max probabilities of labels and ties."""
 
@@ -102,7 +107,7 @@ class TreeNode:
         or value associated with it.
         """
 
-        return self.attribute is None and self.category is None
+        return self.attribute is None and len(self.category) == 0
 
     def is_leaf(self,) -> bool:
         """Returns bool for whether node is leaf.
@@ -191,7 +196,7 @@ class ID3DecisionTree:
         :return: None
         """
 
-        self.__id3(learning_set=learning_set, node=self.root)
+        self.__id3(learning_set=learning_set, node=self.root,)
 
     def __id3(self,
               learning_set: np.ndarray,
@@ -221,6 +226,9 @@ class ID3DecisionTree:
 
         :return: None
         """
+
+        if given is None:
+            given = []
 
         # Learning is just a row vector??? data.shape -> len((,)) < 2
         # then you have only a row vector. np.array[learning_set]
@@ -304,7 +312,7 @@ class ID3DecisionTree:
             # and not str)
             for feature in range(learning_set.shape[1] - 1):
 
-                if given is None or (given is not None and given != feature):
+                if len(given) == 0 or (len(given) != 0 and feature not in given):
                     # N x M matrix where N is the number of categories
                     # of the feature and M is the number of categories
                     # of the label.
@@ -339,88 +347,104 @@ class ID3DecisionTree:
             LOG.debug(str(info_gain_lst))
             best_feature_ix = np.argmax(info_gain_lst)
 
-            # Check to see if info gain is same for features...
-            # make majority vote node if so...
-            if self.__same_information_gain(info_gain_lst, given=given):
-                breakpoint()
-
-            # Should set the attribute of the current node
-            # to this best feature ix per the pseudocode
-            # "Decision Tree Attribute for Root (TreeNode) = A"
-            # from https://en.wikipedia.org/wiki/ID3_algorithm#cite_note-1
-            node.set_attribute(attribute=best_feature_ix)
-
-            # LOGGING
-            LOG.debug('\n')
-            LOG.debug(
-                f'Best feature index (i.e., attribute):{best_feature_ix}')
-
             # Get the categories corresponding to the attribute (feature)
             # that had the highest information gain
             best_feature_categories = np.unique(
                 learning_set[:, best_feature_ix])
 
-            # List of the best learning sets
-            best_category_learning_sets = []
+            # Check to see if info gain is same for features...
+            # make majority vote node if so...
+            if self.__same_information_gain(info_gain_lst, given=given):
+                default_node = TreeNode(category=best_feature_categories[0])
+                default_node.set_majority_decision()
 
-            # Iterate through each of the unique categories for the
-            # best feature and get the learning subsets coresponding
-            # to only that value of the feature...
-            # e.g., For a feature such as
-            # 'outlook = {overcast, sunny, rainy}', the learning subset
-            # containing only one category ('overcast') of the feature
-            # ('outlook') might look like the below array
-            # array(
-            #   [['overcast', 'hot', 'high', False, 'P'],
-            #    ['overcast', 'cool', 'normal', True, 'P'],
-            #    ['overcast', 'mild', 'high', True, 'P'],
-            #    ['overcast', 'hot', 'normal', False, 'P']], dtype=object)
-            for category in best_feature_categories:
+            # If there are unique information gains for each feature
+            # then a learning subset can be created, i.e., for
+            # IG(S | feature:category, new_feature) and the
+            # tree building process can continue
+            else:
 
-                # Uses the indices of the rows for which the feature
-                # category exists to extract the relevant subset (see eg.
-                # if category = 'overcast')...
-                # np.where() returns a tuple, the first element is the
-                # row indices matching the condition. The second element
-                # is not used since it will just be the column
-                # corresponding to the feature....
-                # the learning subset should include all other features
-                best_category_learning_set = learning_set[
-                    np.where(learning_set == category)[0], :]
+                # Should set the attribute of the current node
+                # to this best feature ix per the pseudocode
+                # "Decision Tree Attribute for Root (TreeNode) = A"
+                # from https://en.wikipedia.org/wiki/ID3_algorithm#cite_note-1
+                node.set_attribute(attribute=best_feature_ix)
 
-                # Append the subset to the list
-                best_category_learning_sets.append(best_category_learning_set)
-
-            # For each of the subsets, create a child node with the
-            # associated category...
-            # this way children will have attribute: category
-            # and when testing, the traversal will search each
-            # child until the correct category is found....
-            # e.g.,
-            #           node(attribute=outlook, children=[addresses of child_1-3], category=None)
-            #           /              |                   \ # Visit children until the target category
-            #         node(           node(             node(
-            # attribute=humidity,     attribute=None       attribute=wind
-            # category=sunny)         category=overcast)   category=rain)
-            child_nodes = [TreeNode(category=best_feature_categories[i])
-                           for i in range(len(best_category_learning_sets))]
-
-            # Add the child nodes to the current node and call id3
-            for child_node, learning_subset in zip(child_nodes, best_category_learning_sets):
-
+                # LOGGING
                 LOG.debug('\n')
-                LOG.debug(child_node)
                 LOG.debug(
-                    f'Learning subset given Feature `{best_feature_ix}`: Category `{child_node.get_category()}`')
-                LOG.debug(learning_subset)
-                LOG.debug('\n')
+                    f'Best feature index (i.e., attribute):{best_feature_ix}')
 
-                # TODO: Deal with recursion issue and building
-                # the tree...
+                # List of the best learning sets
+                best_category_learning_sets = []
 
-                node.add_child(child_node)
-                self.__id3(learning_set=learning_subset,
-                           node=child_node, given=best_feature_ix)
+                # Iterate through each of the unique categories for the
+                # best feature and get the learning subsets coresponding
+                # to only that value of the feature...
+                # e.g., For a feature such as
+                # 'outlook = {overcast, sunny, rainy}', the learning subset
+                # containing only one category ('overcast') of the feature
+                # ('outlook') might look like the below array
+                # array(
+                #   [['overcast', 'hot', 'high', False, 'P'],
+                #    ['overcast', 'cool', 'normal', True, 'P'],
+                #    ['overcast', 'mild', 'high', True, 'P'],
+                #    ['overcast', 'hot', 'normal', False, 'P']], dtype=object)
+                for category in best_feature_categories:
+
+                    # Uses the indices of the rows for which the feature
+                    # category exists to extract the relevant subset (see eg.
+                    # if category = 'overcast')...
+                    # np.where() returns a tuple, the first element is the
+                    # row indices matching the condition. The second element
+                    # is not used since it will just be the column
+                    # corresponding to the feature....
+                    # the learning subset should include all other features
+                    best_category_learning_set = learning_set[
+                        np.where(learning_set == category)[0], :]
+
+                    # Append the subset to the list
+                    best_category_learning_sets.append(
+                        best_category_learning_set)
+
+                # For each of the subsets, create a child node with the
+                # associated category...
+                # this way children will have attribute: category
+                # and when testing, the traversal will search each
+                # child until the correct category is found....
+                # e.g.,
+                #           node(attribute=outlook, children=[addresses of child_1-3], category=None)
+                #           /              |                   \ # Visit children until the target category
+                #         node(           node(             node(
+                # attribute=humidity,     attribute=None       attribute=wind
+                # category=sunny)         category=overcast)   category=rain)
+                child_nodes = [TreeNode(category=best_feature_categories[i])
+                               for i in range(len(best_category_learning_sets))]
+
+                # Update the given list... this is to prevent the
+                # tree from reusing information about a feature that
+                # has already been enumerate....
+                # e.g.,
+                #            node(Outlook)
+                #                  | sunny
+                #           node(Humidity)  ---> learning set ignores outlook
+                #        high  /        \  low
+                #    node(Other)        ... ---> learning set ignores outlook AND humidity
+                given.append(best_feature_ix)
+
+                # Add the child nodes to the current node and call id3
+                for child_node, learning_subset in zip(child_nodes, best_category_learning_sets):
+
+                    LOG.debug('\n')
+                    LOG.debug(child_node)
+                    LOG.debug(
+                        f'Learning subset given Feature `{given}`: Category `{child_node.get_category()}`')
+                    LOG.debug(learning_subset)
+                    LOG.debug('\n')
+
+                    node.add_child(child_node)
+                    self.__id3(learning_set=learning_subset,
+                               node=child_node, given=given)
 
         # Returns nothing since the calling function passes the
         # root node by obj-ref
@@ -429,24 +453,26 @@ class ID3DecisionTree:
     def traverse_tree(
             self,
             row_vector: np.ndarray or list or tuple,  # or pd.DataFrame
-            node: TreeNode) -> str or int or bool:
+            node: TreeNode,
+            continuous=False) -> str or int or bool:
         """Recursive traversal of tree until a decision returned.
 
         :param row_vector: Vector of features.
         :param node: <class 'TreeNode'>
+        :param continuous:
 
         :return: The decision for the row vector.
         """
 
-        # Set attribute identifiers based on row vector type...
-        # attribute identifiers will be indices if not dataframe, if dataframe
-        # the attribute identifiers will be the column names...
-        # an attribute identifier might be 'outlook' or it might just
-        # be the index of a given column
-        if isinstance(row_vector, np.ndarray) \
-                or isinstance(row_vector, list) \
-                or isinstance(row_vector, tuple):
-            attributes = range(len(row_vector))
+        # # Set attribute identifiers based on row vector type...
+        # # attribute identifiers will be indices if not dataframe, if dataframe
+        # # the attribute identifiers will be the column names...
+        # # an attribute identifier might be 'outlook' or it might just
+        # # be the index of a given column
+        # if isinstance(row_vector, np.ndarray) \
+        #         or isinstance(row_vector, list) \
+        #         or isinstance(row_vector, tuple):
+        #     attributes = range(len(row_vector))
 
         # # TODO: Might be interesting to include processing of dataframe
         # # later...
@@ -478,17 +504,31 @@ class ID3DecisionTree:
         # All other cases where children exit
         for child in node.get_children():
 
-            # Base case
-            if category == child.get_category() and child.is_leaf():
+            if continuous:
+                # Base case
+                if category in child.get_category() and child.is_leaf():
 
-                LOG.debug('At Leaf:')
-                LOG.debug(child)
-                LOG.debug('Returning!!')
-                return child.get_decision()
+                    LOG.debug('At Leaf:')
+                    LOG.debug(child)
+                    LOG.debug('Returning!!')
+                    return child.get_decision()
 
-            # Recursive case
-            elif category == child.get_category() and not child.is_leaf():
-                return self.traverse_tree(row_vector=row_vector, node=child)
+                # Recursive case
+                elif category in child.get_category() and not child.is_leaf():
+                    return self.traverse_tree(row_vector=row_vector, node=child)
+
+            else:
+                # Base case
+                if category == child.get_category() and child.is_leaf():
+
+                    LOG.debug('At Leaf:')
+                    LOG.debug(child)
+                    LOG.debug('Returning!!')
+                    return child.get_decision()
+
+                # Recursive case
+                elif category == child.get_category() and not child.is_leaf():
+                    return self.traverse_tree(row_vector=row_vector, node=child)
 
         # else:
         #     raise ValueError(
@@ -588,12 +628,16 @@ class ID3DecisionTree:
         else:
             return discretized_arr
 
-    def __same_information_gain(self, information_gain_lst, given=None) -> bool:
-        """Return bool for whether all values of information gain are the same."""
+    def __same_information_gain(self, information_gain_lst: list, given=None) -> bool:
+        """Return bool for whether all values of information gain are the same.
+
+        :param information_gain_lst:
+        :param given: None or <class 'list'>
+        """
 
         if given is not None:
             sliced_information_gain_lst = [information_gain_lst[ix] for ix in range(
-                len(information_gain_lst)) if ix != given]
+                len(information_gain_lst)) if ix not in given]
         else:
             sliced_information_gain_lst = information_gain_lst
 
