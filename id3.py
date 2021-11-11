@@ -23,8 +23,8 @@ class Node:
     def __init__(self, category=None):
         """Define state for Node.
 
-        :param category: <class 'str'> or <class 'int'> 
-        Attributes consist of unique (discrete) 
+        :param category: <class 'str'> or <class 'int'>
+        Attributes consist of unique (discrete)
         categories. E.g., if self.attribute = outlook,
         then category for node is in {sunny, overcast, rain}. For
         cancer or iris dataset, the category will be the numpy interval.
@@ -151,13 +151,15 @@ class ID3DecisionTree:
 
         self.__id3(learning_set=learning_set, node=self.root)
 
-    def __id3(self, learning_set: np.ndarray, node: Node) -> None:
+    def __id3(self, learning_set: np.ndarray, node: Node, given=None) -> None:
         """Create the ID3DecisionTree.
 
-        :param learning_set: The set containing all variables 
-            (features and labels). The learning_set must only have a 
+        :param learning_set: The set containing all variables
+            (features and labels). The learning_set must only have a
             single label. The label MUST be the last element in a given
             row, i.e., the final (-1) column for all rows in the set.
+        :param node:
+        :param given:
 
         :return: A tree node.
         """
@@ -172,11 +174,14 @@ class ID3DecisionTree:
         node.set_learning_set(learning_set=learning_set)
 
         # LOG
+        LOG.debug('\nLabels:')
         LOG.debug(node.get_labels())
 
         # Compute the counts of each category of the label
         label_counts = np.unique(node.get_labels(), return_counts=True)[-1]
 
+        # Log
+        LOG.debug('Label counts:')
         LOG.debug(label_counts)
 
         # Compute entropy of subset
@@ -193,10 +198,14 @@ class ID3DecisionTree:
         # whose variable matches variable of a leaf node
         # then the leaf node yields its decision attribute
         if learning_set_entropy == 0:
-            node.set_unanimous_decision()
 
-            LOG.debug('\nIn `if learning_set_entropy == 0`')
+            LOG.debug('\n---------------------------------')
+            LOG.debug('In `if learning_set_entropy == 0`')
+            LOG.debug('setting unaminous decision for node...')
+            node.set_unanimous_decision()
+            LOG.debug('node ->')
             LOG.debug(node)
+            LOG.debug('---------------------------------')
 
             # # Consider how this recurses... it can only return
             # # a node if the node is a leaf node..., this means
@@ -221,27 +230,43 @@ class ID3DecisionTree:
             # add that information gain to the list
             # TODO: Will have to use the discretized_learning_set
             # instead of the learning_set for the project
+            # feature is assumed to be numeric here (i.e., column is numeric
+            # and not str)
             for feature in range(learning_set.shape[1] - 1):
 
-                # N x M matrix where N is the number of categories
-                # of the feature and M is the number of categories
-                # of the label.
-                subset_counts = self.count_feature_categories_belonging_to_label_categories(
-                    learning_set)
+                if given is None or (given is not None and given != feature):
+                    # N x M matrix where N is the number of categories
+                    # of the feature and M is the number of categories
+                    # of the label.
+                    subset_counts = self.count_feature_categories_belonging_to_label_categories(
+                        learning_set[:, [feature, -1]])
 
-                expected_info_gain = self.__expected_information(
-                    label_counts=label_counts, subset_counts=subset_counts)
+                    LOG.debug('\nsubset_counts')
+                    for row in subset_counts:
+                        LOG.debug(str(row))
 
-                info_gain = self.__information_gain(
-                    entropy=learning_set_entropy,
-                    expected_information=expected_info_gain)
+                    expected_info_gain = self.__expected_information(
+                        label_counts=label_counts, subset_counts=subset_counts)
 
-                info_gain_lst.append(info_gain)
+                    info_gain = self.__information_gain(
+                        entropy=learning_set_entropy,
+                        expected_information=expected_info_gain)
+
+                    info_gain_lst.append(info_gain)
+
+                else:
+
+                    # A 'given' category is ignored for the purposes
+                    # of information gain computations...
+                    # but the ix is still relevant
+                    info_gain_lst.append(-np.inf)
 
             # Get the index of the highest information gain...
             # this corresponds to the feature with the highest
             # information gain
             # TODO: Tie breakers
+            LOG.debug('\nInformation gain list:')
+            LOG.debug(str(info_gain_lst))
             best_feature_ix = np.argmax(info_gain_lst)
 
             # Should set the attribute of the current node
@@ -252,7 +277,8 @@ class ID3DecisionTree:
 
             # LOGGING
             LOG.debug('\n')
-            LOG.debug(best_feature_ix)
+            LOG.debug(
+                f'Best feature index (i.e., attribute):{best_feature_ix}')
 
             # Get the categories corresponding to the attribute (feature)
             # that had the highest information gain
@@ -282,7 +308,8 @@ class ID3DecisionTree:
                 # np.where() returns a tuple, the first element is the
                 # row indices matching the condition. The second element
                 # is not used since it will just be the column
-                # corresponding to the feature.
+                # corresponding to the feature....
+                # the learning subset should include all other features
                 best_category_learning_set = learning_set[
                     np.where(learning_set == category)[0], :]
 
@@ -306,7 +333,10 @@ class ID3DecisionTree:
             # Add the child nodes to the current node and call id3
             for child_node, learning_subset in zip(child_nodes, best_category_learning_sets):
 
+                LOG.debug('\n')
                 LOG.debug(child_node)
+                LOG.debug(
+                    f'Learning subset given Feature `{best_feature_ix}`: Category `{child_node.get_category()}`')
                 LOG.debug(learning_subset)
                 LOG.debug('\n')
 
@@ -314,7 +344,8 @@ class ID3DecisionTree:
                 # the tree...
 
                 node.add_child(child_node)
-                self.__id3(learning_set=learning_subset, node=child_node)
+                self.__id3(learning_set=learning_subset,
+                           node=child_node, given=best_feature_ix)
 
         # Returns nothing since the calling function passes the
         # root node by obj-ref
@@ -425,7 +456,7 @@ class ID3DecisionTree:
 
         # Compute the unique discrete values that the labels can
         # take on
-        unique_label_values = np.unique(attr_label_arr[:, 1])
+        unique_label_values = np.unique(attr_label_arr[:, -1])
 
         # A matrix with 1 row for each discrete value the attribute
         # can take on and 1 column for each discrete value the
