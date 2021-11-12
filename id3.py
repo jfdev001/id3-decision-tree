@@ -678,10 +678,6 @@ if __name__ == '__main__':
         default=None)
     args = parser.parse_args()
 
-    print('------------------------')
-    print('MUST REMOVE ANYTREE')
-    print('------------------------')
-
     # TODO: Remove Logging
     global LOG
     LOG = logging.getLogger()
@@ -693,6 +689,10 @@ if __name__ == '__main__':
     stdout = logging.StreamHandler(sys.stdout)
     LOG.addHandler(file_out)
     LOG.addHandler(stdout)
+
+    LOG.debug('------------------------')
+    LOG.debug('MUST REMOVE ANYTREE')
+    LOG.debug('------------------------')
 
     # Tree instantiation
     tree = ID3DecisionTree()
