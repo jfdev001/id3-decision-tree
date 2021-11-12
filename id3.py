@@ -54,8 +54,7 @@ class TreeNode:
 
         return self.attribute
 
-    def get_category(self,) -> str or int or pd.Interval \
-            or list[str] or list[int] or list[pd.Interval]:
+    def get_category(self,) -> str or int or pd.Interval:
         """Returns the value of the node."""
 
         return self.category
@@ -74,30 +73,25 @@ class TreeNode:
         elif len(self.learning_set.shape) == 1:
             return self.learning_set[-1]
 
-    def set_learning_set(self, learning_set):
+    def set_learning_set(self, learning_set: np.ndarray) -> None:
         """Sets the learning set for node."""
 
         self.learning_set = learning_set
 
-    def set_attribute(self, attribute):
+    def set_attribute(self, attribute) -> None:
         """Sets the attribute for node."""
 
         self.attribute = attribute
 
-    def set_unanimous_decision(self):
+    def set_unanimous_decision(self) -> None:
         """Sets unambiguous decision for node."""
 
         self.decision = self.__get_unanimous_decision()
 
-    def set_majority_decision(self,) -> bool:
+    def set_majority_decision(self,) -> None:
         """Sets decision for node based on majority of labels in learning set."""
 
-        pass
-
-    def set_probabilistic_decision(self,):
-        """Sets decision for node based on max probabilities of labels and ties."""
-
-        self.decision = self.__get_probabilistic_decision()
+        self.decision = self.__get_majority_decision()
 
     def is_root(self,) -> bool:
         """Returns bool for whether node is root node.
@@ -135,9 +129,12 @@ class TreeNode:
         else:
             raise ValueError('All labels are NOT equal!')
 
-    def __get_probabilistic_decision(self,):
-        """Returns best possible decision for node."""
-        return
+    def __get_majority_decision(self,):
+        """Returns decision for node based on majority label."""
+
+        labels, label_counts = np.unique(self.get_labels(), return_counts=True)
+        majority_label = labels[np.argmax(label_counts)]
+        return majority_label
 
     def __all_labels_equal(self,) -> bool:
         """Check to see if all labels in learning set are the same."""
@@ -227,18 +224,17 @@ class ID3DecisionTree:
         :return: None
         """
 
+        # Set a list for given variables... this is used
+        # to prevent entropy calculations over the same attributes
+        # multiple times (if an attribute in handled in a node),
+        # then you shouldn't consider it for entropy, this might lead
+        # to loops in edge cases??
         if given is None:
             given = []
 
-        # Learning is just a row vector??? data.shape -> len((,)) < 2
-        # then you have only a row vector. np.array[learning_set]
-        # converts row vector into column vector...
-        # if len(learning_set.shape) < 2:
-        #     data = np.array([learning_set])
-
         # Want to keep the original learning set
         # this is because if you don't, then you will have issues
-        # with dividing subsets based on categories...
+        # with dividing subsets based on categories (for discrete data)...
 
         # Add the learning set to the node
         node.set_learning_set(learning_set=learning_set)
@@ -248,7 +244,7 @@ class ID3DecisionTree:
         LOG.debug(node.get_labels())
 
         # Compute the counts of each category of the label
-        label_counts = np.unique(node.get_labels(), return_counts=True)[-1]
+        _, label_counts = np.unique(node.get_labels(), return_counts=True)
 
         # Log
         LOG.debug('Label counts:')
@@ -261,42 +257,51 @@ class ID3DecisionTree:
         LOG.debug('\nLearning Set Entropy:' + str(learning_set_entropy))
 
         # Entropy is 0 for data, therefore all records
-        # have same value for categorical attribute
-        # return a leaf node with decision attribute: attribute value
-        # Meaning if the input to the decision tree is a variable
-        # whose variable matches variable of a leaf node
-        # then the leaf node yields its decision attribute
+        # have same value for label category (e.g., all 0)...
+        # Create a leaf node with a unaminous decision
         if learning_set_entropy == 0:
 
             LOG.debug('\n---------------------------------')
             LOG.debug('In `if learning_set_entropy == 0`')
             LOG.debug('setting unaminous decision for node...')
+
             node.set_unanimous_decision()
+
             LOG.debug('node ->')
             LOG.debug(node)
             LOG.debug('---------------------------------')
 
+        # Learning set entropy is implicitly != 0...
+        # this case might happen where all values of the features
+        # are equal, this means that there would be an error in
+        # target assignment...
+        # Dr. Phillips:
+        # "this would be an indication of error in target assignment
+        # (mistakes made by the labeler) which are really in the data.
+        # Since we are trying to model the data, we make a majority vote
+        # (could output probabilities if that would be preferred but
+        #  only use majority vote for this lab)."
         elif node.all_features_equal():
-            pass
+            node.set_majority_decision()
 
-        # If not 0, compute information gain
-        # for each attribute and find attribute with max IG(S, A)
-        # create child node of the root
-
-        # Discretization must occur
+        # Implicitly features are not all equal and entropy != 0
         else:
 
+            # Sorting and categorization occurs for continuous variables
             if continuous:
                 LOG.debug('\Data is continuous:')
                 # Sort the learning set if there is continuous data
                 # sorted_indices = np.argsort(learning_set)
-                sorted_feature_label_sets = [self.sort_arr(
-                    learning_set[:, [feature, -1]]) for feature in range(learning_set.shape[-1] - 1)]
+                sorted_feature_indices = [self.get_sorted_feature_indices(
+                    learning_set[:, feature]) for feature in range(learning_set.shape[-1] - 1)]
 
                 # Discretize the data
                 discretized_feature_label_set = [
-                    self.discretize_continuous_data(sorted_feature_label_set)
-                    for sorted_feature_label_set in sorted_feature_label_sets]
+                    self.discretize_continuous_data(
+                        attr_label_arr=learning_set[:, [feature, -1]],
+                        sort_indices=sorted_feature_indices)
+                    for (feature, sorted_feature_indices)
+                    in enumerate(sorted_feature_indices)]
 
             # List that holds the information gain of each feature
             info_gain_lst = []
@@ -464,25 +469,6 @@ class ID3DecisionTree:
         :return: The decision for the row vector.
         """
 
-        # # Set attribute identifiers based on row vector type...
-        # # attribute identifiers will be indices if not dataframe, if dataframe
-        # # the attribute identifiers will be the column names...
-        # # an attribute identifier might be 'outlook' or it might just
-        # # be the index of a given column
-        # if isinstance(row_vector, np.ndarray) \
-        #         or isinstance(row_vector, list) \
-        #         or isinstance(row_vector, tuple):
-        #     attributes = range(len(row_vector))
-
-        # # TODO: Might be interesting to include processing of dataframe
-        # # later...
-        # elif isinstance(row_vector, pd.DataFrame):
-        #     attributes = row_vector.columns
-        # else:
-        #     raise TypeError(
-        #         ':param row_vector: must be array like or \
-        #             or <class `pandas.DataFrame`>')
-
         # Recursive traversal -- at least one of the attributes
         # should be in the current nodes attribute
         LOG.debug(node)
@@ -529,11 +515,6 @@ class ID3DecisionTree:
                 # Recursive case
                 elif category == child.get_category() and not child.is_leaf():
                     return self.traverse_tree(row_vector=row_vector, node=child)
-
-        # else:
-        #     raise ValueError(
-        #         ':param row_vector: does not have an attribute that matches'
-        #         + ' the decision tree`s node')
 
     # TODO: Remove
     def entropy(self, obj_counts: list) -> float:
@@ -612,14 +593,22 @@ class ID3DecisionTree:
         # Resulting matrix
         return attr_label_count_matrix
 
+    def get_sorted_feature_indices(self, feature_vector: np.ndarray) -> np.ndarray:
+        """Sorts the array and keeps labels lined up."""
+
+        sort_indices = np.argsort(feature_vector)
+        return sort_indices
+
     def discretize_continuous_data(
             self,
             attr_label_arr: np.ndarray,
+            sort_indices: np.ndarray,
             return_bins=False) -> list[np.ndarray] \
             or tuple[list[np.ndarray], list[tuple]]:
         """Converts continuous attributes to discrete valued array."""
 
-        threshold_indices = self.__get_threshold_indices(attr_label_arr)
+        threshold_indices = self.__get_threshold_indices(
+            attr_label_arr[sort_indices, :])
         discretized_arr, bins = self.__get_binned_arrs(
             attr_label_arr, threshold_indices, return_bins)
 
@@ -717,13 +706,6 @@ class ID3DecisionTree:
             return lst_of_discretized_arrs, bins
         else:
             return lst_of_discretized_arrs
-
-    def sort_arr(self, attr_label_arr: np.ndarray) -> np.ndarray:
-        """Sorts the array and keeps labels lined up."""
-
-        sorted_attr_indices = np.argsort(attr_label_arr[:, 0])
-        attr_label_arr = attr_label_arr[sorted_attr_indices, :]
-        return attr_label_arr
 
     def __information_gain(
             self,
@@ -856,6 +838,7 @@ if __name__ == '__main__':
     LOG.debug('\nTesting!!!')
     LOG.debug('-----------------------')
 
+    # Test and output predictions
     if len(testing_set.shape) == 2:
 
         preds = np.empty(shape=(testing_set.shape[0], ), dtype=object)
@@ -880,5 +863,3 @@ if __name__ == '__main__':
             row_vector=testing_set[: -1], node=tree.get_root())
 
         LOG.debug(f'Prediction: {pred} -- Target: {testing_set.shape[0]}')
-
-    # Output number of testing examples that are correct
