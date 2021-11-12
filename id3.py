@@ -254,7 +254,7 @@ class ID3DecisionTree:
     def __train(self,
                 learning_set: np.ndarray,
                 node: TreeNode,
-                given: list = [0],) -> None:
+                given: list = None,) -> None:
         """"""
 
         # Add learning set into
@@ -263,6 +263,9 @@ class ID3DecisionTree:
         # Compute entropy of learning set
         learning_set_entropy = self.__entropy(
             np.unique(node.get_labels(), return_counts=True)[-1])
+
+        # LOG
+        LOG.debug(f'Learning Set Entropy: {learning_set_entropy}')
 
         # Determine splitting or terminal node conditions
         if learning_set_entropy == 0:
@@ -287,6 +290,8 @@ class ID3DecisionTree:
                 node=node, given=given)
 
             # LOGGING
+            LOG.debug(type(split_categories))
+            LOG.debug(split_categories.shape)
             for feature_category_ix, feature_category in enumerate(split_categories):
                 LOG.debug(feature_category_ix)
                 LOG.debug(len(feature_category)
@@ -304,32 +309,38 @@ class ID3DecisionTree:
             # LOG THE INFORMATION GAIN ARRAY
             LOG.debug(str(information_gain_arr))
 
-            breakpoint()
-
             # if the data is continuous, you will have to flatten it
             if self.__same_information_gain(
-                    information_gain_lst=information_gain_arr, given=given, ):
+                    information_gain_arr=information_gain_arr, given=given, ):
 
+                LOG.debug('\nSame information gain for subset')
                 node.set_majority_decision()
 
             else:
 
-                pass
-                # # TODO: Fix the decision tree building step
-                # # The current node's attribute is the attribute (feature)
-                # # computed from the best split point
-                # best_feature_ix = [
-                #     feature_ix for (feature_ix, _) in enumerate(split_thresholds)
-                #     for split_threshold in split_thresholds
-                #     if split_threshold == best_threshold]
+                # Compute the best information gain ix across all categories
+                # for each feature
+                best_information_gain_ixs = np.unravel_index(
+                    np.nanargmax(information_gain_arr), information_gain_arr.shape)
 
-                # # Initialize given if it hasn't already been intialized...
-                # # will this scope be sufficient??
+                # Get the best feature ix
+                best_feature_ix = best_information_gain_ixs[0]
 
-                # # Now that a feature has been explored, it is added
-                # # to the `given` set to prevent splitting on an
-                # # an attribute twice
-                # given.append(best_feature_ix)
+                # Now that a feature has been explored, it is added
+                # to the `given` set to prevent splitting on an
+                # an attribute twice
+                given.append(best_feature_ix)
+
+                # Get the category corresponding ot the highest information gain...
+                # note the category will be a tuple
+                best_category_tuple = split_categories[best_information_gain_ixs]
+
+                # LOGGING
+                LOG.debug('\n')
+                LOG.debug(f'Best Feature Ix: {best_feature_ix}')
+                LOG.debug(str(information_gain_arr[best_information_gain_ixs]))
+                LOG.debug(str(best_category_tuple))
+                breakpoint()
 
                 # # Get the subset associated with the best split point
                 # # if the data is continuous, then the subset
@@ -339,7 +350,7 @@ class ID3DecisionTree:
                 #     best_feature_ix=best_feature_ix,
                 #     best_split_point=best_split_point,
                 #     node=node,
-                #     )
+                # )
 
                 # # Create child nodes with the left node's category being the
                 # # the first interval in the best binary split point
@@ -355,7 +366,7 @@ class ID3DecisionTree:
                 #         learning_set=learning_subset,
                 #         node=child,
                 #         given=given,
-                #         )
+                #     )
 
     def __compute_split_categories(
             self,
@@ -391,15 +402,16 @@ class ID3DecisionTree:
                         left=avg_val, right=np.inf, closed='left')
 
                     # Add potential bound tuple to feature categories
-                    feature_categories.append((lower_bound, upper_bound))
+                    feature_categories.append([lower_bound, upper_bound])
 
             else:
-                feature_categories.append(None)
+                for val in range(features.shape[0] - 1):
+                    feature_categories.append([None, None])
 
             # Append feature categories to parent list
             all_feature_categories.append(feature_categories)
 
-        return all_feature_categories
+        return np.array(all_feature_categories, dtype=object)
 
     def __compute_category_information_gain(
             self,
@@ -426,7 +438,7 @@ class ID3DecisionTree:
         for feature_ix, feature in enumerate(split_categories):
             for category_ix, categories in enumerate(feature):
 
-                if categories is None:
+                if None in categories:
                     information_gain_arr[feature_ix, :] = np.nan
 
                 else:
@@ -889,20 +901,18 @@ class ID3DecisionTree:
         else:
             return discretized_arr
 
-    def __same_information_gain(self, information_gain_lst: list, given: list) -> bool:
+    def __same_information_gain(self, information_gain_arr: np.ndarray, given: list) -> bool:
         """Return bool for whether all values of information gain are the same.
 
-        :param information_gain_lst:
+        :param information_gain_arr:
         :param given: None or <class 'list'>
         """
 
         if given is not None:
-            sliced_information_gain_lst = [information_gain_lst[ix] for ix in range(
-                len(information_gain_lst)) if ix not in given]
-        else:
-            sliced_information_gain_lst = information_gain_lst
-
-        return np.all(sliced_information_gain_lst == sliced_information_gain_lst[0])
+            sliced_information_gain_arr = information_gain_arr[[
+                ix for ix in range(information_gain_arr.shape[0]) if ix not in given], :]
+            return not np.any(sliced_information_gain_arr)
+        return not np.any(information_gain_arr)
 
     def __get_threshold_indices(self, attr_label_arr: np.ndarray) -> list[tuple]:
         """Returns list of indices where adjacent labels differ.
