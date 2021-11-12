@@ -215,7 +215,7 @@ class ID3DecisionTree:
     def train(self, learning_set: np.ndarray,) -> None:
         """Train the decision tree on continuous data only."""
 
-        self.__train(learning_set=learning_set, node=self.root())
+        self.__train(learning_set=learning_set, node=self.root)
 
     def __train(self,
                 learning_set: np.ndarray,
@@ -239,6 +239,10 @@ class ID3DecisionTree:
 
         else:
 
+            # Set given if not existing
+            if given is None:
+                given = []
+
             # Get potential splits -- will have to consider the
             # attributes already given here so that they can
             # be ignored...
@@ -247,6 +251,14 @@ class ID3DecisionTree:
             #       )
             split_categories = self.__compute_split_categories(
                 node=node, given=given)
+
+            # LOGGING
+            for feature_category_ix, feature_category in enumerate(split_categories):
+                LOG.debug(feature_category_ix)
+                if None in feature_category:
+                    LOG.debug(feature_category)
+                LOG.debug(str(feature_category))
+                LOG.debug('\n\n')
 
             # Create a another susbet in the node that has discrete
             # values... release it from memory later???
@@ -275,8 +287,6 @@ class ID3DecisionTree:
 
                 # # Initialize given if it hasn't already been intialized...
                 # # will this scope be sufficient??
-                # if given is None:
-                #     given = []
 
                 # # Now that a feature has been explored, it is added
                 # # to the `given` set to prevent splitting on an
@@ -312,18 +322,46 @@ class ID3DecisionTree:
     def __compute_split_categories(
             self,
             node: TreeNode,
-            given: list,) -> list:
+            given: list,) -> list[list[tuple[pd.Interval] or None]]:
         """"""
 
         features = node.get_features()
-        category_tensor = []
+        all_feature_categories = []
         for feature in range(features.shape[1]):
+
+            feature_categories = []
             if feature not in given:
+
+                # Extract 1D array of values for a feature
                 feature_vector = features[:, feature]
+
+                # Sort the values in the feature vector
                 sorted_feature_vector = feature_vector[np.argsort(
                     feature_vector)]
+
+                for val in range(len(sorted_feature_vector) - 1):
+
+                    # Compute split point
+                    cur_val = sorted_feature_vector[val]
+                    adj_val = sorted_feature_vector[val+1]
+                    avg_val = (cur_val + adj_val) / 2
+
+                    # Compute bounds
+                    lower_bound = pd.Interval(
+                        left=-np.inf, right=avg_val, closed='neither')
+                    upper_bound = pd.Interval(
+                        left=avg_val, right=np.inf, closed='left')
+
+                    # Add potential bound tuple to feature categories
+                    feature_categories.append((lower_bound, upper_bound))
+
             else:
-                pass
+                feature_categories.append(None)
+
+            # Append feature categories to parent list
+            all_feature_categories.append(feature_categories)
+
+        return all_feature_categories
 
     def __compute_category_information_gain(
             self,
@@ -956,57 +994,61 @@ if __name__ == '__main__':
     # Load learning data
     if args.training_data.endswith('xlsx'):
         data = pd.read_excel(args.training_data).to_numpy()
+        tree = ID3DecisionTree()
+        tree.decision_tree_learning(learning_set=data)
     elif args.training_data.endswith('txt'):
         data = np.loadtxt(args.training_data,)
+        tree = ID3DecisionTree()
+        tree.train(learning_set=data)
 
     testing_set = data
     learning_set = data
 
-    # Reshape learning set to col vector
-    if len(learning_set.shape) == 1:
-        learning_set = np.expand_dims(learning_set, axis=0)
+    # # Reshape learning set to col vector
+    # if len(learning_set.shape) == 1:
+    #     learning_set = np.expand_dims(learning_set, axis=0)
 
-    LOG.debug('\nIn __main__')
-    LOG.debug(learning_set.shape)
-    LOG.debug(learning_set)
+    # LOG.debug('\nIn __main__')
+    # LOG.debug(learning_set.shape)
+    # LOG.debug(learning_set)
 
-    # Train tree
-    LOG.debug('\nTraining decision tree!')
-    tree.decision_tree_learning(learning_set=learning_set)
+    # # Train tree
+    # LOG.debug('\nTraining decision tree!')
+    # tree.decision_tree_learning(learning_set=learning_set)
 
-    # TODO: Remove -- display tree
-    LOG.debug('\n-----------------------')
-    LOG.debug('TREE')
-    tree.display_tree()
-    LOG.debug('\n-----------------------')
+    # # TODO: Remove -- display tree
+    # LOG.debug('\n-----------------------')
+    # LOG.debug('TREE')
+    # tree.display_tree()
+    # LOG.debug('\n-----------------------')
 
-    # Test tree traversal
-    LOG.debug('-----------------------')
-    LOG.debug('\nTesting!!!')
-    LOG.debug('-----------------------')
+    # # Test tree traversal
+    # LOG.debug('-----------------------')
+    # LOG.debug('\nTesting!!!')
+    # LOG.debug('-----------------------')
 
-    # Test and output predictions
-    if len(testing_set.shape) == 2:
+    # # Test and output predictions
+    # if len(testing_set.shape) == 2:
 
-        preds = np.empty(shape=(testing_set.shape[0], ), dtype=object)
-        ix = 0
+    #     preds = np.empty(shape=(testing_set.shape[0], ), dtype=object)
+    #     ix = 0
 
-        for row_vector in testing_set:
-            LOG.debug('\n' + str(row_vector[: -1]))
-            pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
-            LOG.debug(pred)
-            preds[ix] = pred
-            ix += 1
+    #     for row_vector in testing_set:
+    #         LOG.debug('\n' + str(row_vector[: -1]))
+    #         pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
+    #         LOG.debug(pred)
+    #         preds[ix] = pred
+    #         ix += 1
 
-        LOG.debug('Do the predictions and targets match?')
-        LOG.debug(
-            f'{np.count_nonzero(preds == testing_set[:, -1])} / {testing_set.shape[0]}')
+    #     LOG.debug('Do the predictions and targets match?')
+    #     LOG.debug(
+    #         f'{np.count_nonzero(preds == testing_set[:, -1])} / {testing_set.shape[0]}')
 
-    elif len(testing_set.shape) == 1:
+    # elif len(testing_set.shape) == 1:
 
-        LOG.debug(str(testing_set))
+    #     LOG.debug(str(testing_set))
 
-        pred = tree.traverse_tree(
-            row_vector=testing_set[: -1], node=tree.get_root())
+    #     pred = tree.traverse_tree(
+    #         row_vector=testing_set[: -1], node=tree.get_root())
 
-        LOG.debug(f'Prediction: {pred} -- Target: {testing_set.shape[0]}')
+    #     LOG.debug(f'Prediction: {pred} -- Target: {testing_set.shape[0]}')
