@@ -97,7 +97,7 @@ class TreeNode:
         """Sets the discrete feature label set.
 
         Converts a single feature vector into a boolean array based
-        on interval. 
+        on interval.
         """
 
         # Get the interval threshold (-np.inf, val) -> val
@@ -230,26 +230,21 @@ class ID3DecisionTree:
                 child_node.name(), parent=parent_anytree_node)
             self.attach_children(child_node, child_anytree_node)
 
-    def decision_tree_learning(self, learning_set: np.ndarray) -> None:
-        """Helper function for ID3 decision tree learning.
+    def get_root(self,):
+        """Gets the root of the tree."""
 
-        :param data: Contains the learning set and attribute sets.
-
-        :return: None
-        """
-
-        self.__id3(learning_set=learning_set, node=self.root,)
-
-    def decision_tree_testing(self, row_vector: np.ndarray, continuous: bool) -> int:
-        """Make prediction on set with a trained decision tree."""
-
-        self.traverse_tree(row_vector=row_vector,
-                           node=self.root, continuous=continuous)
+        return self.root
 
     def train(self, learning_set: np.ndarray,) -> None:
         """Train the decision tree on continuous data only."""
 
         self.__train(learning_set=learning_set, node=self.root)
+
+    def predict(self, row_vector: np.ndarray) -> int:
+        """Make prediction on set with a trained decision tree."""
+
+        self.traverse_tree(row_vector=row_vector,
+                           node=self.root)
 
     def __train(self,
                 learning_set: np.ndarray,
@@ -368,6 +363,117 @@ class ID3DecisionTree:
                 #         given=given,
                 #     )
 
+    def traverse_tree(
+            self,
+            row_vector: np.ndarray,
+            node: TreeNode,) -> int:
+        """Recursive traversal of tree until a decision returned.
+
+        :param row_vector: Vector of features.
+        :param node: <class 'TreeNode'>
+
+        :return: The decision for the row vector.
+        """
+
+        # Recursive traversal -- at least one of the attributes
+        # should be in the current nodes attribute
+        LOG.debug(node)
+        # if node.get_attribute() in attributes:
+
+        # Consider a row vector...
+        #  A_i = A1         A2          A3
+        #       [A1_cat     A2_cat      A3_cat]
+        # Each attribute has categories corresponding to it, and
+        # indexing the i^th attribute gives the category (or value)
+        # associated with that particular attribute
+        value = row_vector[node.get_attribute()]
+        LOG.debug(value)
+
+        # Special case
+        if node.is_root() and node.is_leaf():
+            return node.get_decision()
+
+        # All other cases where children exit
+        for child in node.get_children():
+
+            # Base case
+            if value in child.get_category() and child.is_leaf():
+
+                LOG.debug('At Leaf:')
+                LOG.debug(child)
+                LOG.debug('Returning!!')
+                return child.get_decision()
+
+            # Recursive case
+            elif value in child.get_category() and not child.is_leaf():
+                return self.traverse_tree(row_vector=row_vector, node=child)
+
+    def count_feature_categories_belonging_to_label_categories(
+            self,
+            attr_label_arr: np.ndarray) -> list[list]:
+        """Computes matrix matching p_i, n_i, ... for any number of values.
+
+        The notation p_i and n_i is from
+        https://hunch.net/~coms-4771/quinlan.pdf
+
+        :param attr_label_arr: 2D <class 'numpy.ndarray'> where the first column
+            is the attribute and the values that the attribute can take
+            on while the second column is the labels (classification)
+            for each value of the attribute.
+
+        :return: <class 'list'> of <class 'list'>
+        """
+
+        # Compute the unique discrete values that the attributes can
+        # take on
+        unique_attr_values = np.unique(attr_label_arr[:, 0])
+
+        # TODO: Remove this
+        # Compute the unique discrete values that the labels can
+        # take on
+        unique_label_values = np.unique(attr_label_arr[:, -1])
+
+        # A matrix with 1 row for each discrete value the attribute
+        # can take on and 1 column for each discrete value the
+        # label can take on. This data structure holds the counts
+        # of each attribute value that matches the discrete label value
+        # Example,
+        # ['overcast' 'rain' 'sunny'] for labels = {0, 1}
+        # outlook [[0, 4], [2, 3], [3, 2]]
+        # This means that the outlook attribute which can take on 3 discrete
+        # values has 0 overcast days that are also labeled 0, while it has
+        # 4 overcast days that are also labeled 1.
+        attr_label_count_matrix = []
+
+        # Iterate through each unique value of the attributes
+        # and count the occurences for which the attribute value
+        # is unique value AND the label is a unique value of that label
+        for unique_attr_value in unique_attr_values:
+
+            # Counts the subset matches of attr value and label
+            counts = []
+
+            # Iterate through each unique value of the labels
+            for unique_label_value in unique_label_values:
+
+                # Boolean vector... elements are True where condition
+                # holds, False otherwise
+                subset_vector = np.logical_and(
+                    attr_label_arr[:, 0] == unique_attr_value,
+                    attr_label_arr[:, 1] == unique_label_value)
+
+                # Non-zero means the instances in which the condition is True
+                subset_count = np.count_nonzero(subset_vector)
+
+                # Append the value to the counts list
+                counts.append(subset_count)
+
+            # Append the counts list to the parent matrix
+            attr_label_count_matrix.append(counts)
+
+        # Resulting matrix
+        return attr_label_count_matrix
+
     def __compute_split_categories(
             self,
             node: TreeNode,
@@ -478,429 +584,6 @@ class ID3DecisionTree:
 
         raise NotImplementedError
 
-    def __id3(self,
-              learning_set: np.ndarray,
-              node: TreeNode,
-              given=None,
-              continuous=False) -> None:
-        """Create the ID3DecisionTree.
-
-        Potential discrete layouts
-
-        H(learning_set) = 0 -> Terminal Node Unananimously
-
-        Split Data Into Discrete Categories.
-
-        Humidity:   0.
-        PlayTennis:
-
-        :param learning_set: The set containing all variables
-            (features and labels). The learning_set must only have a
-            single label. The label MUST be the last element in a given
-            row, i.e., the final (-1) column for all rows in the set.
-        :param node: <class 'TreeNode'>
-        :param given: The attribute value in the learning subset
-            which is to be ignored during information gain calculations.
-
-        TODO: continuous: bool
-
-        :return: None
-        """
-
-        # Set a list for given variables... this is used
-        # to prevent entropy calculations over the same attributes
-        # multiple times (if an attribute in handled in a node),
-        # then you shouldn't consider it for entropy, this might lead
-        # to loops in edge cases??
-        if given is None:
-            given = []
-
-        # Want to keep the original learning set
-        # this is because if you don't, then you will have issues
-        # with dividing subsets based on categories (for discrete data)...
-
-        # Add the learning set to the node
-        node.set_learning_set(learning_set=learning_set)
-
-        # LOG
-        LOG.debug('\nLabels:')
-        LOG.debug(node.get_labels())
-
-        # Compute the counts of each category of the label
-        _, label_counts = np.unique(node.get_labels(), return_counts=True)
-
-        # Log
-        LOG.debug('Label counts:')
-        LOG.debug(label_counts)
-
-        # Compute entropy of subset
-        learning_set_entropy = self.__entropy(label_counts)
-
-        # LOGGING
-        LOG.debug('\nLearning Set Entropy:' + str(learning_set_entropy))
-
-        # Entropy is 0 for data, therefore all records
-        # have same value for label category (e.g., all 0)...
-        # Create a leaf node with a unaminous decision
-        if learning_set_entropy == 0:
-
-            LOG.debug('\n---------------------------------')
-            LOG.debug('In `if learning_set_entropy == 0`')
-            LOG.debug('setting unaminous decision for node...')
-
-            node.set_unanimous_decision()
-
-            LOG.debug('node ->')
-            LOG.debug(node)
-            LOG.debug('---------------------------------')
-
-        # Learning set entropy is implicitly != 0...
-        # this case might happen where all values of the features
-        # are equal, this means that there would be an error in
-        # target assignment...
-        # Dr. Phillips:
-        # "this would be an indication of error in target assignment
-        # (mistakes made by the labeler) which are really in the data.
-        # Since we are trying to model the data, we make a majority vote
-        # (could output probabilities if that would be preferred but
-        #  only use majority vote for this lab)."
-        elif node.all_features_equal():
-            node.set_majority_decision()
-
-        # Implicitly features are not all equal and entropy != 0
-        else:
-
-            # Sorting and categorization occurs for continuous variables
-            if continuous:
-                LOG.debug('\Data is continuous:')
-                # Sort the learning set if there is continuous data
-                # sorted_indices = np.argsort(learning_set)
-                sorted_feature_indices = [self.get_sorted_feature_indices(
-                    learning_set[:, feature]) for feature in range(learning_set.shape[-1] - 1)]
-
-                # Discretize the data
-                discretized_feature_label_set = [
-                    self.discretize_continuous_data(
-                        attr_label_arr=learning_set[:, [feature, -1]],
-                        sort_indices=sorted_feature_indices)
-                    for (feature, sorted_feature_indices)
-                    in enumerate(sorted_feature_indices)]
-
-            # List that holds the information gain of each feature
-            info_gain_lst = []
-
-            # For each feature in the learning set, find the number
-            # of the feature categories that belongs to each of the label
-            # categories, compute the information expected information
-            # gain, compute the actual information gain, then
-            # add that information gain to the list
-            # TODO: Will have to use the discretized_learning_set
-            # instead of the learning_set for the project
-            # feature is assumed to be numeric here (i.e., column is numeric
-            # and not str)
-            for feature in range(learning_set.shape[1] - 1):
-
-                if len(given) == 0 or (len(given) != 0 and feature not in given):
-                    # N x M matrix where N is the number of categories
-                    # of the feature and M is the number of categories
-                    # of the label.
-                    subset_counts = self.count_feature_categories_belonging_to_label_categories(
-                        learning_set[:, [feature, -1]])
-
-                    LOG.debug('\nsubset_counts')
-                    for row in subset_counts:
-                        LOG.debug(str(row))
-
-                    expected_info_gain = self.__expected_information(
-                        label_counts=label_counts, subset_counts=subset_counts)
-
-                    info_gain = self.__information_gain(
-                        entropy=learning_set_entropy,
-                        expected_information=expected_info_gain)
-
-                    info_gain_lst.append(info_gain)
-
-                else:
-
-                    # A 'given' category is ignored for the purposes
-                    # of information gain computations...
-                    # but the ix is still relevant
-                    info_gain_lst.append(-np.inf)
-
-            # Get the index of the highest information gain...
-            # this corresponds to the feature with the highest
-            # information gain
-            # TODO: Tie breakers
-            LOG.debug('\nInformation gain list:')
-            LOG.debug(str(info_gain_lst))
-            best_feature_ix = np.argmax(info_gain_lst)
-
-            # Get the categories corresponding to the attribute (feature)
-            # that had the highest information gain
-            best_feature_categories = np.unique(
-                learning_set[:, best_feature_ix])
-
-            # Check to see if info gain is same for features...
-            # make majority vote node if so...
-            if self.__same_information_gain(info_gain_lst, given=given):
-                default_node = TreeNode(category=best_feature_categories[0])
-                default_node.set_majority_decision()
-
-            # If there are unique information gains for each feature
-            # then a learning subset can be created, i.e., for
-            # IG(S | feature:category, new_feature) and the
-            # tree building process can continue
-            else:
-
-                # Should set the attribute of the current node
-                # to this best feature ix per the pseudocode
-                # "Decision Tree Attribute for Root (TreeNode) = A"
-                # from https://en.wikipedia.org/wiki/ID3_algorithm#cite_note-1
-                node.set_attribute(attribute=best_feature_ix)
-
-                # LOGGING
-                LOG.debug('\n')
-                LOG.debug(
-                    f'Best feature index (i.e., attribute):{best_feature_ix}')
-
-                # List of the best learning sets
-                best_category_learning_sets = []
-
-                # Iterate through each of the unique categories for the
-                # best feature and get the learning subsets coresponding
-                # to only that value of the feature...
-                # e.g., For a feature such as
-                # 'outlook = {overcast, sunny, rainy}', the learning subset
-                # containing only one category ('overcast') of the feature
-                # ('outlook') might look like the below array
-                # array(
-                #   [['overcast', 'hot', 'high', False, 'P'],
-                #    ['overcast', 'cool', 'normal', True, 'P'],
-                #    ['overcast', 'mild', 'high', True, 'P'],
-                #    ['overcast', 'hot', 'normal', False, 'P']], dtype=object)
-                for category in best_feature_categories:
-
-                    # Uses the indices of the rows for which the feature
-                    # category exists to extract the relevant subset (see eg.
-                    # if category = 'overcast')...
-                    # np.where() returns a tuple, the first element is the
-                    # row indices matching the condition. The second element
-                    # is not used since it will just be the column
-                    # corresponding to the feature....
-                    # the learning subset should include all other features
-                    best_category_learning_set = learning_set[
-                        np.where(learning_set == category)[0], :]
-
-                    # Append the subset to the list
-                    best_category_learning_sets.append(
-                        best_category_learning_set)
-
-                # For each of the subsets, create a child node with the
-                # associated category...
-                # this way children will have attribute: category
-                # and when testing, the traversal will search each
-                # child until the correct category is found....
-                # e.g.,
-                #           node(attribute=outlook, children=[addresses of child_1-3], category=None)
-                #           /              |                   \ # Visit children until the target category
-                #         node(           node(             node(
-                # attribute=humidity,     attribute=None       attribute=wind
-                # category=sunny)         category=overcast)   category=rain)
-                child_nodes = [TreeNode(category=best_feature_categories[i])
-                               for i in range(len(best_category_learning_sets))]
-
-                # Update the given list... this is to prevent the
-                # tree from reusing information about a feature that
-                # has already been enumerate....
-                # e.g.,
-                #            node(Outlook)
-                #                  | sunny
-                #           node(Humidity)  ---> learning set ignores outlook
-                #        high  /        \  low
-                #    node(Other)        ... ---> learning set ignores outlook AND humidity
-                given.append(best_feature_ix)
-
-                # Add the child nodes to the current node and call id3
-                for child_node, learning_subset in zip(child_nodes, best_category_learning_sets):
-
-                    LOG.debug('\n')
-                    LOG.debug(child_node)
-                    LOG.debug(
-                        f'Learning subset given Feature `{given}`: Category `{child_node.get_category()}`')
-                    LOG.debug(learning_subset)
-                    LOG.debug('\n')
-
-                    node.add_child(child_node)
-                    self.__id3(learning_set=learning_subset,
-                               node=child_node, given=given)
-
-        # Returns nothing since the calling function passes the
-        # root node by obj-ref
-        return
-
-    def traverse_tree(
-            self,
-            row_vector: np.ndarray or list or tuple,  # or pd.DataFrame
-            node: TreeNode,
-            continuous=False) -> str or int or bool:
-        """Recursive traversal of tree until a decision returned.
-
-        :param row_vector: Vector of features.
-        :param node: <class 'TreeNode'>
-        :param continuous:
-
-        :return: The decision for the row vector.
-        """
-
-        # Recursive traversal -- at least one of the attributes
-        # should be in the current nodes attribute
-        LOG.debug(node)
-        # if node.get_attribute() in attributes:
-
-        # Consider a row vector...
-        #  A_i = A1         A2          A3
-        #       [A1_cat     A2_cat      A3_cat]
-        # Each attribute has categories corresponding to it, and
-        # indexing the i^th attribute gives the category (or value)
-        # associated with that particular attribute
-        category = row_vector[node.get_attribute()]
-        LOG.debug(category)
-
-        # Special case
-        if node.is_root() and node.is_leaf():
-            return node.get_decision()
-
-        # All other cases where children exit
-        for child in node.get_children():
-
-            if continuous:
-                # Base case
-                if category in child.get_category() and child.is_leaf():
-
-                    LOG.debug('At Leaf:')
-                    LOG.debug(child)
-                    LOG.debug('Returning!!')
-                    return child.get_decision()
-
-                # Recursive case
-                elif category in child.get_category() and not child.is_leaf():
-                    return self.traverse_tree(row_vector=row_vector, node=child)
-
-            else:
-                # Base case
-                if category == child.get_category() and child.is_leaf():
-
-                    LOG.debug('At Leaf:')
-                    LOG.debug(child)
-                    LOG.debug('Returning!!')
-                    return child.get_decision()
-
-                # Recursive case
-                elif category == child.get_category() and not child.is_leaf():
-                    return self.traverse_tree(row_vector=row_vector, node=child)
-
-    # TODO: Remove
-    def entropy(self, obj_counts: list) -> float:
-        return self.__entropy(obj_counts)
-
-    # TODO: Remove
-    def expected_information(self, label_counts: list, attr_counts: list[list]):
-        return self.__expected_information(label_counts, attr_counts)
-
-    # TODO: Remove
-    def information_gain(self, entropy: float, expected_information: float) -> float:
-        return self.__information_gain(entropy, expected_information)
-
-    def count_feature_categories_belonging_to_label_categories(
-            self,
-            attr_label_arr: np.ndarray) -> list[list]:
-        """Computes matrix matching p_i, n_i, ... for any number of values.
-
-        The notation p_i and n_i is from
-        https://hunch.net/~coms-4771/quinlan.pdf
-
-        :param attr_label_arr: 2D <class 'numpy.ndarray'> where the first column
-            is the attribute and the values that the attribute can take
-            on while the second column is the labels (classification)
-            for each value of the attribute.
-
-        :return: <class 'list'> of <class 'list'>
-        """
-
-        # Compute the unique discrete values that the attributes can
-        # take on
-        unique_attr_values = np.unique(attr_label_arr[:, 0])
-
-        # TODO: Remove this
-        # Compute the unique discrete values that the labels can
-        # take on
-        unique_label_values = np.unique(attr_label_arr[:, -1])
-
-        # A matrix with 1 row for each discrete value the attribute
-        # can take on and 1 column for each discrete value the
-        # label can take on. This data structure holds the counts
-        # of each attribute value that matches the discrete label value
-        # Example,
-        # ['overcast' 'rain' 'sunny'] for labels = {0, 1}
-        # outlook [[0, 4], [2, 3], [3, 2]]
-        # This means that the outlook attribute which can take on 3 discrete
-        # values has 0 overcast days that are also labeled 0, while it has
-        # 4 overcast days that are also labeled 1.
-        attr_label_count_matrix = []
-
-        # Iterate through each unique value of the attributes
-        # and count the occurences for which the attribute value
-        # is unique value AND the label is a unique value of that label
-        for unique_attr_value in unique_attr_values:
-
-            # Counts the subset matches of attr value and label
-            counts = []
-
-            # Iterate through each unique value of the labels
-            for unique_label_value in unique_label_values:
-
-                # Boolean vector... elements are True where condition
-                # holds, False otherwise
-                subset_vector = np.logical_and(
-                    attr_label_arr[:, 0] == unique_attr_value,
-                    attr_label_arr[:, 1] == unique_label_value)
-
-                # Non-zero means the instances in which the condition is True
-                subset_count = np.count_nonzero(subset_vector)
-
-                # Append the value to the counts list
-                counts.append(subset_count)
-
-            # Append the counts list to the parent matrix
-            attr_label_count_matrix.append(counts)
-
-        # Resulting matrix
-        return attr_label_count_matrix
-
-    def get_sorted_feature_indices(self, feature_vector: np.ndarray) -> np.ndarray:
-        """Sorts the array and keeps labels lined up."""
-
-        sort_indices = np.argsort(feature_vector)
-        return sort_indices
-
-    def discretize_continuous_data(
-            self,
-            attr_label_arr: np.ndarray,
-            sort_indices: np.ndarray,
-            return_bins=False) -> list[np.ndarray] \
-            or tuple[list[np.ndarray], list[tuple]]:
-        """Converts continuous attributes to discrete valued array."""
-
-        threshold_indices = self.__get_threshold_indices(
-            attr_label_arr[sort_indices, :])
-        discretized_arr, bins = self.__get_binned_arrs(
-            attr_label_arr, threshold_indices, return_bins)
-
-        if return_bins:
-            return discretized_arr, bins
-        else:
-            return discretized_arr
-
     def __same_information_gain(self, information_gain_arr: np.ndarray, given: list) -> bool:
         """Return bool for whether all values of information gain are the same.
 
@@ -913,81 +596,6 @@ class ID3DecisionTree:
                 ix for ix in range(information_gain_arr.shape[0]) if ix not in given], :]
             return not np.any(sliced_information_gain_arr)
         return not np.any(information_gain_arr)
-
-    def __get_threshold_indices(self, attr_label_arr: np.ndarray) -> list[tuple]:
-        """Returns list of indices where adjacent labels differ.
-
-        Array should be sorted.
-        """
-
-        # Check sorted
-        if attr_label_arr[0, 0] > attr_label_arr[1, 0]:
-            raise ValueError(':param attr_label_arr: must be sorted')
-
-        # For all rows except the last
-        threshold_indices = []
-        for row in range(len(attr_label_arr)-1):
-
-            # Get the current label and the next label
-            cur_label = attr_label_arr[row, -1]
-            next_label = attr_label_arr[row+1, -1]
-
-            # If the labels don't equal each other, use this
-            # as splitting information
-            if cur_label != next_label:
-                threshold_indices.append((row, row+1))
-
-        # Resulting indices
-        return threshold_indices
-
-    def __get_binned_arrs(
-        self,
-        attr_label_arr: np.ndarray,
-        threshold_indices: list[list],
-        return_bins: bool) -> list[np.ndarray] \
-            or tuple[list[np.ndarray], list[tuple]]:
-        """Use thresholds to return list of data with different bins."""
-
-        # Compute the bins
-        bins = []
-        for threshold_ix in threshold_indices:
-
-            # Extract the indices from the tuple
-            ix, adj_ix = threshold_ix
-
-            # The bin is the average of the two
-            bin_ = (attr_label_arr[ix, 0] + attr_label_arr[adj_ix, 0]) / 2
-
-            # Append to a list of potential bins
-            bins.append(bin_)
-
-        # Discretize the data into binned arrs
-        lst_of_discretized_arrs = []
-        for b in bins:
-
-            # Binary thresholds
-            # TODO: Is the copy here necessary???
-            discretized_attr_label_arr = attr_label_arr.copy().astype(object)
-            for ix, row in enumerate(discretized_attr_label_arr):
-
-                # TODO: Change for specs
-                # attr > bin_ or can be framed as attr >= bin_
-                # b <= attr < inf
-                if row[0] >= b:
-                    discretized_attr_label_arr[ix, 0] = pd.Interval(
-                        left=b, right=np.inf, closed='left')
-
-                # -inf < attr < b
-                else:
-                    discretized_attr_label_arr[ix, 0] = pd.Interval(
-                        left=-np.inf, right=b, closed='neither')
-
-            lst_of_discretized_arrs.append(discretized_attr_label_arr)
-
-        if return_bins:
-            return lst_of_discretized_arrs, bins
-        else:
-            return lst_of_discretized_arrs
 
     def __information_gain(
             self,
@@ -1049,11 +657,6 @@ class ID3DecisionTree:
         total_num_labels = sum(label_counts)
         return sum((sum(c_i) / total_num_labels) * self.__entropy(c_i)
                    for c_i in subset_counts)
-
-    def get_root(self,):
-        """Gets the root of the tree."""
-
-        return self.root
 
 
 if __name__ == '__main__':
