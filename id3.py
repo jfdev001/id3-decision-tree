@@ -361,7 +361,6 @@ class ID3DecisionTree:
                 LOG.debug(str(learning_subsets[0]))
                 LOG.debug('\nSubset 1:')
                 LOG.debug(str(learning_subsets[1]))
-                breakpoint()
 
                 # Create child nodes with the left node's category being the
                 # the first interval in the best binary split point
@@ -753,6 +752,17 @@ if __name__ == '__main__':
     testing_set = data
     learning_set = data
 
+    # LOG DATA
+    LOG.debug('\n-----------------------')
+    LOG.debug(str(data))
+    LOG.debug('\n-----------------------')
+
+    # TODO: Remove -- display tree
+    LOG.debug('\n-----------------------')
+    LOG.debug('TREE')
+    tree.display_tree()
+    LOG.debug('\n-----------------------')
+
     # # Reshape learning set to col vector
     # if len(learning_set.shape) == 1:
     #     learning_set = np.expand_dims(learning_set, axis=0)
@@ -764,12 +774,6 @@ if __name__ == '__main__':
     # # Train tree
     # LOG.debug('\nTraining decision tree!')
     # tree.decision_tree_learning(learning_set=learning_set)
-
-    # # TODO: Remove -- display tree
-    # LOG.debug('\n-----------------------')
-    # LOG.debug('TREE')
-    # tree.display_tree()
-    # LOG.debug('\n-----------------------')
 
     # # Test tree traversal
     # LOG.debug('-----------------------')
