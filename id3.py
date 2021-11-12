@@ -165,6 +165,9 @@ class TreeNode:
 
         return np.all(self.learning_set[:, :-1] == self.learning_set[0, 0])
 
+    def name(self,):
+        return f'[{self.attribute}:{self.category}:{self.decision}]'
+
     def __get_unanimous_decision(self,):
         """Returns a single element of the label subset if all labels are equal."""
 
@@ -194,9 +197,6 @@ class TreeNode:
         rep += f' category={self.category},'
         rep += f' decision={self.decision})'
         return rep
-
-    def name(self,):
-        return f'[{self.attribute}:{self.category}:{self.decision}]'
 
 
 class ID3DecisionTree:
