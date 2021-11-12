@@ -195,6 +195,12 @@ class ID3DecisionTree:
 
         self.__id3(learning_set=learning_set, node=self.root,)
 
+    def decision_tree_testing(self, row_vector: np.ndarray, continuous: bool) -> int:
+        """Make prediction on set with a trained decision tree."""
+
+        self.traverse_tree(row_vector=row_vector,
+                           node=self.root, continuous=continuous)
+
     def __id3(self,
               learning_set: np.ndarray,
               node: TreeNode,
