@@ -212,19 +212,15 @@ class ID3DecisionTree:
         self.traverse_tree(row_vector=row_vector,
                            node=self.root, continuous=continuous)
 
-    def train(self,
-              learning_set: np.ndarray,
-              continuous=False) -> None:
-        """Train the decision tree on ALL continuous or ALL categorical data."""
+    def train(self, learning_set: np.ndarray,) -> None:
+        """Train the decision tree on continuous data only."""
 
-        self.__train(learning_set=learning_set,
-                     node=self.root(), continuous=continuous)
+        self.__train(learning_set=learning_set, node=self.root())
 
     def __train(self,
                 learning_set: np.ndarray,
                 node: TreeNode,
-                given: list = None,
-                continuous: bool = False) -> None:
+                given: list = None,) -> None:
         """"""
 
         # Add learning set into
@@ -246,26 +242,23 @@ class ID3DecisionTree:
             # Get potential splits -- will have to consider the
             # attributes already given here so that they can
             # be ignored...
-            # ((cat11, cat12), (cat21, cat22,), ...)
             # or (((interval11, interval12), (interval13, interval14), ),
             #      (interval21, interval22,), (interval23, interval24),
             #       )
             split_categories = self.__compute_split_categories(
-                node=node, given=given, continuous=continuous)
+                node=node, given=given)
 
             # Create a another susbet in the node that has discrete
             # values... release it from memory later???
-            if continuous:
-                node.set_discrete_features(categories=split_categories)
+            node.set_discrete_features(categories=split_categories)
 
             # Determine the split (category)
             information_gain_lst = self.__compute_category_information_gain(
-                split_categories=split_categories, continuous=continuous, node=node)
+                split_categories=split_categories, node=node)
 
             # if the data is continuous, you will have to flatten it
             if self.__same_information_gain(
-                    information_gain_lst=information_gain_lst,
-                    continuous=continuous):
+                    information_gain_lst=information_gain_lst,):
 
                 node.set_majority_decision()
 
@@ -298,7 +291,7 @@ class ID3DecisionTree:
                 #     best_feature_ix=best_feature_ix,
                 #     best_split_point=best_split_point,
                 #     node=node,
-                #     continuous=continuous)
+                #     )
 
                 # # Create child nodes with the left node's category being the
                 # # the first interval in the best binary split point
@@ -314,35 +307,27 @@ class ID3DecisionTree:
                 #         learning_set=learning_subset,
                 #         node=child,
                 #         given=given,
-                #         continuous=continuous)
+                #         )
 
     def __compute_split_categories(
             self,
             node: TreeNode,
-            given: list,
-            continuous: bool) -> list:
+            given: list,) -> list:
         """"""
 
         features = node.get_features()
-        print(features)
-        print(features.shape)
-        if not continuous:
-            return [np.unique(features[:, feature]) if feature not in given else None
-                    for feature in range(features.shape[1])]
-        else:
-            category_tensor = []
-            for feature in range(features.shape[1]):
-                if feature not in given:
-                    feature_vector = features[:, feature]
-                    sorted_feature_vector = feature_vector[np.argsort(
-                        feature_vector)]
-                else:
-                    pass
+        category_tensor = []
+        for feature in range(features.shape[1]):
+            if feature not in given:
+                feature_vector = features[:, feature]
+                sorted_feature_vector = feature_vector[np.argsort(
+                    feature_vector)]
+            else:
+                pass
 
     def __compute_category_information_gain(
             self,
             split_categories: list,
-            continuous: bool,
             node: TreeNode) -> list:
         """"""
 
@@ -351,9 +336,8 @@ class ID3DecisionTree:
     def __get_learning_subset(
             self,
             best_feature_ix: int,
-            best_category: str or int or list[pd.Interval],
-            node: TreeNode,
-            continuous: bool) -> np.ndarray:
+            best_category: list[pd.Interval],
+            node: TreeNode,) -> np.ndarray:
         """"""
 
         raise NotImplementedError
