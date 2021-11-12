@@ -254,7 +254,7 @@ class ID3DecisionTree:
     def __train(self,
                 learning_set: np.ndarray,
                 node: TreeNode,
-                given: list = None,) -> None:
+                given: list = [0],) -> None:
         """"""
 
         # Add learning set into
@@ -291,22 +291,24 @@ class ID3DecisionTree:
                 LOG.debug(feature_category_ix)
                 LOG.debug(len(feature_category)
                           if None not in feature_category else 0)
-                if None in feature_category:
-                    LOG.debug(feature_category)
                 LOG.debug(str(feature_category))
                 LOG.debug('\n\n')
 
-            # # Create a another susbet in the node that has discrete
-            # # values... release it from memory later???
-            # node.set_discrete_features(categories=split_categories)
-
             # Determine the split (category)
-            information_gain_lst = self.__compute_category_information_gain(
-                split_categories=split_categories, node=node)
+            information_gain_arr = self.__compute_category_information_gain(
+                split_categories=split_categories,
+                node=node,
+                given=given,
+                learning_set_entropy=learning_set_entropy)
+
+            # LOG THE INFORMATION GAIN ARRAY
+            LOG.debug(str(information_gain_arr))
+
+            breakpoint()
 
             # if the data is continuous, you will have to flatten it
             if self.__same_information_gain(
-                    information_gain_lst=information_gain_lst,):
+                    information_gain_lst=information_gain_arr, given=given, ):
 
                 node.set_majority_decision()
 
@@ -401,11 +403,59 @@ class ID3DecisionTree:
 
     def __compute_category_information_gain(
             self,
+            learning_set_entropy: float,
             split_categories: list[list[tuple[pd.Interval] or None]],
-            node: TreeNode) -> list:
-        """"""
+            node: TreeNode,
+            given: list) -> np.ndarray:
+        """Computes information gain for each feature and each feature category."""
 
-        return
+        # Information gain array -- (m features, n - 1 categories)
+        information_gain_arr = np.empty(
+            shape=(node.get_features().shape[1],
+                   node.get_features().shape[0] - 1))
+
+        # Compute label counts as they will be needed later
+        label_counts = np.unique(node.get_labels(), return_counts=True)[-1]
+
+        # For a given feature, there will be a number of categories
+        # equal to n - 1. For each category in a feature, compute
+        # the information gain associated with that category
+        # and append it to a list
+        # if a None is encounter for a feature, do np.nan for that
+        # spot for argmax computation reasons
+        for feature_ix, feature in enumerate(split_categories):
+            for category_ix, categories in enumerate(feature):
+
+                if categories is None:
+                    information_gain_arr[feature_ix, :] = np.nan
+
+                else:
+                    # Create a distinct feature label set using
+                    # the categories above
+                    node.set_discrete_feature_label_set(
+                        feature_ix=feature_ix,
+                        categories=categories)
+
+                    # Compute the number of the categories that
+                    # are in the same set as each of the labels
+                    count_matrix = self.count_feature_categories_belonging_to_label_categories(
+                        attr_label_arr=node.get_discrete_feature_label_set())
+
+                    # Compute the expected information gain for such a matrix
+                    expected_information_gain = self.__expected_information(
+                        label_counts=label_counts, subset_counts=count_matrix)
+
+                    # Compute information gain
+                    information_gain = self.__information_gain(
+                        learning_set_entropy,
+                        expected_information=expected_information_gain)
+
+                    # Update the information gain array
+                    information_gain_arr[feature_ix,
+                                         category_ix] = information_gain
+
+        # Return the array
+        return information_gain_arr
 
     def __get_learning_subset(
             self,
@@ -839,7 +889,7 @@ class ID3DecisionTree:
         else:
             return discretized_arr
 
-    def __same_information_gain(self, information_gain_lst: list, given: list, continous: bool) -> bool:
+    def __same_information_gain(self, information_gain_lst: list, given: list) -> bool:
         """Return bool for whether all values of information gain are the same.
 
         :param information_gain_lst:
@@ -1007,6 +1057,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--testing_data',
         help='path to txt file with testing data for ID3 decision tree.')
+    parser.add_argument(
+        '--small_sample',
+        help='slice for smaller number of samples. (default: None)',
+        type=int,
+        nargs='+',
+        default=None)
     args = parser.parse_args()
 
     print('------------------------')
@@ -1034,7 +1090,13 @@ if __name__ == '__main__':
         tree = ID3DecisionTree()
         tree.decision_tree_learning(learning_set=data)
     elif args.training_data.endswith('txt'):
-        data = np.loadtxt(args.training_data,)
+        if args.small_sample is not None:
+            data = np.loadtxt(args.training_data,)[
+                args.small_sample[0]: args.small_sample[1], :]
+        else:
+            data = np.loadtxt(args.training_data,)
+
+        LOG.debug(f'Data Dims {data.shape}')
         tree = ID3DecisionTree()
         tree.train(learning_set=data)
 
