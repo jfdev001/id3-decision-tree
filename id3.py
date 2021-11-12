@@ -240,11 +240,25 @@ class ID3DecisionTree:
 
         self.__train(learning_set=learning_set, node=self.root)
 
-    def predict(self, row_vector: np.ndarray) -> int:
-        """Make prediction on set with a trained decision tree."""
+    def predict(self, testing_set: np.ndarray) -> int or np.ndarray:
+        """Prediction on 1D or 2D data"""
 
-        self.traverse_tree(row_vector=row_vector,
-                           node=self.root)
+        # Convert testing set to row vector if 1D
+        if len(testing_set.shape) == 1:
+            return self.__predict(testing_set)
+
+        else:
+            preds = []
+            for row in testing_set:
+                pred = self.__predict(row_vector=row)
+                preds.append(pred)
+            return np.array(preds)
+
+    def __predict(self, row_vector: np.ndarray) -> int:
+        """Make prediction on 1D array of attributes (features)."""
+
+        return self.traverse_tree(row_vector=row_vector,
+                                  node=self.root)
 
     def __train(self,
                 learning_set: np.ndarray,
@@ -389,33 +403,24 @@ class ID3DecisionTree:
         :return: The decision for the row vector.
         """
 
-        # Recursive traversal -- at least one of the attributes
-        # should be in the current nodes attribute
-        LOG.debug(node)
-        # if node.get_attribute() in attributes:
-
         # Consider a row vector...
         #  A_i = A1         A2          A3
-        #       [A1_cat     A2_cat      A3_cat]
-        # Each attribute has categories corresponding to it, and
+        #       [A1_val     A2_val      A3_val]
+        # Each attribute has val corresponding to it, and
         # indexing the i^th attribute gives the category (or value)
         # associated with that particular attribute
+        # axis 0 has size 1 so use of `:` in indexing does not
         value = row_vector[node.get_attribute()]
-        LOG.debug(value)
 
         # Special case
         if node.is_root() and node.is_leaf():
             return node.get_decision()
 
-        # All other cases where children exit
+        # All other cases where children exist
         for child in node.get_children():
 
             # Base case
             if value in child.get_category() and child.is_leaf():
-
-                LOG.debug('At Leaf:')
-                LOG.debug(child)
-                LOG.debug('Returning!!')
                 return child.get_decision()
 
             # Recursive case
@@ -653,7 +658,7 @@ class ID3DecisionTree:
 
         For E(x) = x * log_2(x), the limit as x -> 0^+ [E(x)] = 0.
 
-        :param obj_counts: <class 'list'> of <class 'int'> 
+        :param obj_counts: <class 'list'> of <class 'int'>
             List where each element is the
             number of objects belonging to a particular class. E.g.,
             if there are 3 label classes [0 1 2], the first
@@ -676,7 +681,7 @@ class ID3DecisionTree:
         """Expected information required for tree with some attribute as node.
 
         :param label_counts: <class 'list'> of <class 'int'>
-        :param subset_counts: <class 'list'> of <class 'list'> where the 
+        :param subset_counts: <class 'list'> of <class 'list'> where the
             number of rows is the number of discrete values
             that the attribute can take on while the number of columns
             is the number of values that the label can take on. For example,
@@ -746,11 +751,13 @@ if __name__ == '__main__':
             data = np.loadtxt(args.training_data,)
 
         LOG.debug(f'Data Dims {data.shape}')
+
+        # TODO: Case where learning set has 1 item ....
+        # ... not necessary because this will just return decision
+        # node
+
         tree = ID3DecisionTree()
         tree.train(learning_set=data)
-
-    testing_set = data
-    learning_set = data
 
     # LOG DATA
     LOG.debug('\n-----------------------')
@@ -763,45 +770,15 @@ if __name__ == '__main__':
     tree.display_tree()
     LOG.debug('\n-----------------------')
 
-    # # Reshape learning set to col vector
-    # if len(learning_set.shape) == 1:
-    #     learning_set = np.expand_dims(learning_set, axis=0)
+    # TESSSSSSSSSTING
+    testing_set = data[:, :-1]
+    LOG.debug(str(testing_set))
 
-    # LOG.debug('\nIn __main__')
-    # LOG.debug(learning_set.shape)
-    # LOG.debug(learning_set)
+    # Simple case where the test set has more than 1 data item
+    preds = tree.predict(testing_set=testing_set)
+    LOG.debug(str(preds))
 
-    # # Train tree
-    # LOG.debug('\nTraining decision tree!')
-    # tree.decision_tree_learning(learning_set=learning_set)
-
-    # # Test tree traversal
-    # LOG.debug('-----------------------')
-    # LOG.debug('\nTesting!!!')
-    # LOG.debug('-----------------------')
-
-    # # Test and output predictions
-    # if len(testing_set.shape) == 2:
-
-    #     preds = np.empty(shape=(testing_set.shape[0], ), dtype=object)
-    #     ix = 0
-
-    #     for row_vector in testing_set:
-    #         LOG.debug('\n' + str(row_vector[: -1]))
-    #         pred = tree.traverse_tree(row_vector[: -1], tree.get_root())
-    #         LOG.debug(pred)
-    #         preds[ix] = pred
-    #         ix += 1
-
-    #     LOG.debug('Do the predictions and targets match?')
-    #     LOG.debug(
-    #         f'{np.count_nonzero(preds == testing_set[:, -1])} / {testing_set.shape[0]}')
-
-    # elif len(testing_set.shape) == 1:
-
-    #     LOG.debug(str(testing_set))
-
-    #     pred = tree.traverse_tree(
-    #         row_vector=testing_set[: -1], node=tree.get_root())
-
-    #     LOG.debug(f'Prediction: {pred} -- Target: {testing_set.shape[0]}')
+    # Compute accuracy
+    accuracy = np.count_nonzero(preds == data[:, -1])
+    LOG.debug(preds.shape)
+    LOG.debug(f'{accuracy}/{testing_set.shape[0]}')
