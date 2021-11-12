@@ -36,6 +36,7 @@ class TreeNode:
         self.category = category
         self.attribute = None
         self.learning_set = None
+        self.discrete_feature_label_set = None
         self.children = []
         self.decision = None
 
@@ -80,14 +81,47 @@ class TreeNode:
 
         return self.learning_set
 
+    def get_discrete_feature_label_set(self,):
+        """return the discrete feature label set."""
+
+        return self.discrete_feature_label_set
+
     def set_learning_set(self, learning_set: np.ndarray) -> None:
         """Sets the learning set for node."""
 
         self.learning_set = learning_set
 
-    def set_discrete_features(self, categories: list) -> None:
-        """"""
-        raise NotImplementedError
+    def set_discrete_feature_label_set(
+            self,
+            feature_ix: int, categories: tuple[pd.Interval]) -> None:
+        """Sets the discrete feature label set.
+
+        Converts a single feature vector into a boolean array based
+        on interval. 
+        """
+
+        # Get the interval threshold (-np.inf, val) -> val
+        threshold = categories[0].right
+
+        # Extract the appropriate feature vector
+        feature_vector = self.get_features()[:, feature_ix]
+
+        # Make categorical feature vector (boolean)
+        boolean_feature_vector = np.apply_along_axis(
+            lambda ele: ele < threshold, axis=0, arr=feature_vector)
+
+        # Make an empty numpy array which will be (n, 2)..
+        # 2 columns since there is a single feature and the corresponding
+        # label
+        discrete_feature_label_set = np.empty(
+            shape=(feature_vector.shape[0], 2))
+
+        # Populate the array
+        discrete_feature_label_set[:, 0] = boolean_feature_vector
+        discrete_feature_label_set[:, 1] = self.get_labels()
+
+        # Set the data member
+        self.discrete_feature_label_set = discrete_feature_label_set
 
     def set_attribute(self, attribute) -> None:
         """Sets the attribute for node."""
@@ -262,9 +296,9 @@ class ID3DecisionTree:
                 LOG.debug(str(feature_category))
                 LOG.debug('\n\n')
 
-            # Create a another susbet in the node that has discrete
-            # values... release it from memory later???
-            node.set_discrete_features(categories=split_categories)
+            # # Create a another susbet in the node that has discrete
+            # # values... release it from memory later???
+            # node.set_discrete_features(categories=split_categories)
 
             # Determine the split (category)
             information_gain_lst = self.__compute_category_information_gain(
@@ -325,7 +359,7 @@ class ID3DecisionTree:
             self,
             node: TreeNode,
             given: list,) -> list[list[tuple[pd.Interval] or None]]:
-        """"""
+        """Return 3D list of potential splits for each valid feature."""
 
         features = node.get_features()
         all_feature_categories = []
@@ -367,11 +401,11 @@ class ID3DecisionTree:
 
     def __compute_category_information_gain(
             self,
-            split_categories: list,
+            split_categories: list[list[tuple[pd.Interval] or None]],
             node: TreeNode) -> list:
         """"""
 
-        raise NotImplementedError
+        return
 
     def __get_learning_subset(
             self,
