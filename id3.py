@@ -255,6 +255,8 @@ class ID3DecisionTree:
             # LOGGING
             for feature_category_ix, feature_category in enumerate(split_categories):
                 LOG.debug(feature_category_ix)
+                LOG.debug(len(feature_category)
+                          if None not in feature_category else 0)
                 if None in feature_category:
                     LOG.debug(feature_category)
                 LOG.debug(str(feature_category))
@@ -733,6 +735,7 @@ class ID3DecisionTree:
         # take on
         unique_attr_values = np.unique(attr_label_arr[:, 0])
 
+        # TODO: Remove this
         # Compute the unique discrete values that the labels can
         # take on
         unique_label_values = np.unique(attr_label_arr[:, -1])
