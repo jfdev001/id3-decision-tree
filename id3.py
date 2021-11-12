@@ -67,16 +67,22 @@ class TreeNode:
     def get_labels(self,) -> np.ndarray:
         """Returns the labels for all rows."""
 
-        if len(self.learning_set.shape) == 2:
-            return self.learning_set[:, -1]
+        # Handling matrix or row vector [n, m] where n=1 for row vector
+        return self.learning_set[:, -1]
 
-        elif len(self.learning_set.shape) == 1:
-            return self.learning_set[-1]
+    def get_learning_set(self,) -> np.ndarray:
+        """Returns the learning set"""
+
+        return self.learning_set
 
     def set_learning_set(self, learning_set: np.ndarray) -> None:
         """Sets the learning set for node."""
 
         self.learning_set = learning_set
+
+    def set_discrete_features(self, categories: list) -> None:
+        """"""
+        raise NotImplementedError
 
     def set_attribute(self, attribute) -> None:
         """Sets the attribute for node."""
@@ -200,6 +206,137 @@ class ID3DecisionTree:
 
         self.traverse_tree(row_vector=row_vector,
                            node=self.root, continuous=continuous)
+
+    def train(self,
+              learning_set: np.ndarray,
+              continuous=False) -> None:
+        """Train the decision tree"""
+
+        self.__train(learning_set=learning_set,
+                     node=self.root(), continuous=continuous)
+
+    def __train(self,
+                learning_set: np.ndarray,
+                node: TreeNode,
+                given: list = None,
+                continuous: bool = False) -> None:
+        """"""
+
+        # Add learning set into
+        node.set_learning_set(learning_set=learning_set)
+
+        # Compute entropy of learning set
+        learning_set_entropy = self.__entropy(
+            np.unique(node.get_labels(), return_counts=True)[-1])
+
+        # Determine splitting or terminal node conditions
+        if learning_set_entropy == 0:
+            node.set_unanimous_decision()
+
+        elif node.all_features_equal():
+            node.set_majority_decision()
+
+        else:
+
+            # Get potential splits -- will have to consider the
+            # attributes already given here so that they can
+            # be ignored...
+            # ((cat11, cat12), (cat21, cat22,), ...)
+            split_categories = self.__compute_split_categories(
+                node=node, given=given, continuous=continuous)
+
+            # Create a another susbet in the node that has discrete
+            # values... release it from memory later???
+            if continuous:
+                node.set_discrete_features(categories=split_categories)
+
+            # Determine the split (category) with the highest information gain
+            # If the data is continuous, a given threshold will consist
+            # of >= interval and < interval
+            information_gain_lst = self.__compute_category_information_gain(
+                split_categories=split_categories, continuous=continuous, node=node)
+
+            # if the data is continuous, you will have to flatten it
+            if self.__same_information_gain(
+                    information_gain_lst=information_gain_lst,
+                    continuous=continuous):
+
+                node.set_majority_decision()
+
+            else:
+
+                pass
+                # # TODO: Fix the decision tree building step
+                # # The current node's attribute is the attribute (feature)
+                # # computed from the best split point
+                # best_feature_ix = [
+                #     feature_ix for (feature_ix, _) in enumerate(split_thresholds)
+                #     for split_threshold in split_thresholds
+                #     if split_threshold == best_threshold]
+
+                # # Initialize given if it hasn't already been intialized...
+                # # will this scope be sufficient??
+                # if given is None:
+                #     given = []
+
+                # # Now that a feature has been explored, it is added
+                # # to the `given` set to prevent splitting on an
+                # # an attribute twice
+                # given.append(best_feature_ix)
+
+                # # Get the subset associated with the best split point
+                # # if the data is continuous, then the subset
+                # # are those points where the feature's rows correspond
+                # # to the best split point category
+                # learning_subset = self.__get_learning_subset(
+                #     best_feature_ix=best_feature_ix,
+                #     best_split_point=best_split_point,
+                #     node=node,
+                #     continuous=continuous)
+
+                # # Create child nodes with the left node's category being the
+                # # the first interval in the best binary split point
+                # # list and the right node's category being the second
+                # # interval in the same list
+                # children = [TreeNode(category=category)
+                #             for category in best_split_point]
+
+                # # Continue to build the tree
+                # for child in children:
+                #     node.add_child(child)
+                #     self.__train(
+                #         learning_set=learning_subset,
+                #         node=child,
+                #         given=given,
+                #         continuous=continuous)
+
+    def __compute_split_categories(
+            self,
+            node: TreeNode,
+            given: list,
+            continuous: bool) -> list:
+        """"""
+
+        raise NotImplementedError
+
+    def __compute_category_information_gain(
+            self,
+            split_categories: list,
+            continuous: bool,
+            node: TreeNode) -> list:
+        """"""
+
+        raise NotImplementedError
+
+    def __get_learning_subset(
+            self,
+            best_feature_ix: int,
+            best_category: str or int or list[pd.Interval],
+            node: TreeNode,
+            continuous: bool) -> np.ndarray:
+        """"""
+
+        raise NotImplementedError
 
     def __id3(self,
               learning_set: np.ndarray,
@@ -623,7 +760,7 @@ class ID3DecisionTree:
         else:
             return discretized_arr
 
-    def __same_information_gain(self, information_gain_lst: list, given=None) -> bool:
+    def __same_information_gain(self, information_gain_lst: list, given: list, continous: bool) -> bool:
         """Return bool for whether all values of information gain are the same.
 
         :param information_gain_lst:
