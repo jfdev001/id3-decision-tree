@@ -255,7 +255,7 @@ class ID3DecisionTree:
                 learning_set: np.ndarray,
                 node: TreeNode,
                 given: list = None,) -> None:
-        """"""
+        """Private helper method for training decision tree on continous data."""
 
         # Add learning set into
         node.set_learning_set(learning_set=learning_set)
