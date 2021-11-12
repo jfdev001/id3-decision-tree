@@ -321,6 +321,16 @@ class ID3DecisionTree:
                 # Get the best feature ix
                 best_feature_ix = best_information_gain_ixs[0]
 
+                # Set the attribute of the node... e.g.,
+                #  ----------------------
+                # | node(atrribute=None) |
+                # |----------------------|
+                #       NOW BECOMES
+                #  ---------------------------------
+                # | node(atrribute=best_feature_ix) |
+                # |---------------------------------|
+                node.set_attribute(best_feature_ix)
+
                 # Now that a feature has been explored, it is added
                 # to the `given` set to prevent splitting on an
                 # an attribute twice
@@ -328,40 +338,45 @@ class ID3DecisionTree:
 
                 # Get the category corresponding ot the highest information gain...
                 # note the category will be a tuple
-                best_category_tuple = split_categories[best_information_gain_ixs]
+                best_category_arr = split_categories[best_information_gain_ixs]
 
                 # LOGGING
                 LOG.debug('\n')
                 LOG.debug(f'Best Feature Ix: {best_feature_ix}')
                 LOG.debug(str(information_gain_arr[best_information_gain_ixs]))
-                LOG.debug(str(best_category_tuple))
+                LOG.debug(str(best_category_arr) +
+                          ' ' + str(type(best_category_arr)))
+
+                # Get the subset associated with the best split point
+                # if the data is continuous, then the subset
+                # are those points where the feature's rows correspond
+                # to the best split point category
+                learning_subsets = self.__get_learning_subsets(
+                    best_feature_ix=best_feature_ix,
+                    best_category_arr=best_category_arr,
+                    node=node,)
+
+                # LOGGING
+                LOG.debug('\nSubset 0:')
+                LOG.debug(str(learning_subsets[0]))
+                LOG.debug('\nSubset 1:')
+                LOG.debug(str(learning_subsets[1]))
                 breakpoint()
 
-                # # Get the subset associated with the best split point
-                # # if the data is continuous, then the subset
-                # # are those points where the feature's rows correspond
-                # # to the best split point category
-                # learning_subset = self.__get_learning_subset(
-                #     best_feature_ix=best_feature_ix,
-                #     best_split_point=best_split_point,
-                #     node=node,
-                # )
+                # Create child nodes with the left node's category being the
+                # the first interval in the best binary split point
+                # list and the right node's category being the second
+                # interval in the same list
+                children = [TreeNode(category=category)
+                            for category in best_category_arr]
 
-                # # Create child nodes with the left node's category being the
-                # # the first interval in the best binary split point
-                # # list and the right node's category being the second
-                # # interval in the same list
-                # children = [TreeNode(category=category)
-                #             for category in best_split_point]
-
-                # # Continue to build the tree
-                # for child in children:
-                #     node.add_child(child)
-                #     self.__train(
-                #         learning_set=learning_subset,
-                #         node=child,
-                #         given=given,
-                #     )
+                # Continue to build the tree
+                for (learning_subset, child) in zip(learning_subsets, children):
+                    node.add_child(child)
+                    self.__train(
+                        learning_set=learning_subset,
+                        node=child,
+                        given=given,)
 
     def traverse_tree(
             self,
@@ -575,14 +590,36 @@ class ID3DecisionTree:
         # Return the array
         return information_gain_arr
 
-    def __get_learning_subset(
+    def __get_learning_subsets(
             self,
             best_feature_ix: int,
-            best_category: list[pd.Interval],
-            node: TreeNode,) -> np.ndarray:
-        """"""
+            best_category_arr: np.ndarray[pd.Interval],
+            node: TreeNode,) -> tuple[np.ndarray]:
+        """Extracts subsets from current learning set based on the categories.
 
-        raise NotImplementedError
+        This only works when the splitting is binary since a boolean
+        vector is used.
+        """
+
+        # Indices where the attribute: value < threshold
+        feature_vector = node.get_features()[:, best_feature_ix]
+        threshold = best_category_arr[0].right  # (-inf, threshold)
+        category_1_ixs = np.where(feature_vector < threshold)[0]
+
+        LOG.debug(str(feature_vector))
+        LOG.debug(str(category_1_ixs))
+
+        # Learnings subsets
+        cur_learning_set = node.get_learning_set()
+        num_rows = cur_learning_set.shape[0]
+        learning_subset_less = cur_learning_set[category_1_ixs, :]
+        learning_subset_greater_than_or_eq = cur_learning_set[[
+            ix for ix in range(num_rows) if ix not in category_1_ixs], :]
+
+        # Return a tuple where the first element is the subset
+        # corresponding to attribute:values < threshold and the second
+        # attribute:values >= threshold
+        return learning_subset_less, learning_subset_greater_than_or_eq
 
     def __same_information_gain(self, information_gain_arr: np.ndarray, given: list) -> bool:
         """Return bool for whether all values of information gain are the same.
