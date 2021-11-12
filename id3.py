@@ -70,6 +70,11 @@ class TreeNode:
         # Handling matrix or row vector [n, m] where n=1 for row vector
         return self.learning_set[:, -1]
 
+    def get_features(self,) -> np.ndarray:
+        """Returns the features for all rows."""
+
+        return self.learning_set[:, :-1]
+
     def get_learning_set(self,) -> np.ndarray:
         """Returns the learning set"""
 
@@ -210,7 +215,7 @@ class ID3DecisionTree:
     def train(self,
               learning_set: np.ndarray,
               continuous=False) -> None:
-        """Train the decision tree"""
+        """Train the decision tree on ALL continuous or ALL categorical data."""
 
         self.__train(learning_set=learning_set,
                      node=self.root(), continuous=continuous)
@@ -242,6 +247,9 @@ class ID3DecisionTree:
             # attributes already given here so that they can
             # be ignored...
             # ((cat11, cat12), (cat21, cat22,), ...)
+            # or (((interval11, interval12), (interval13, interval14), ),
+            #      (interval21, interval22,), (interval23, interval24),
+            #       )
             split_categories = self.__compute_split_categories(
                 node=node, given=given, continuous=continuous)
 
@@ -250,9 +258,7 @@ class ID3DecisionTree:
             if continuous:
                 node.set_discrete_features(categories=split_categories)
 
-            # Determine the split (category) with the highest information gain
-            # If the data is continuous, a given threshold will consist
-            # of >= interval and < interval
+            # Determine the split (category)
             information_gain_lst = self.__compute_category_information_gain(
                 split_categories=split_categories, continuous=continuous, node=node)
 
@@ -317,7 +323,21 @@ class ID3DecisionTree:
             continuous: bool) -> list:
         """"""
 
-        raise NotImplementedError
+        features = node.get_features()
+        print(features)
+        print(features.shape)
+        if not continuous:
+            return [np.unique(features[:, feature]) if feature not in given else None
+                    for feature in range(features.shape[1])]
+        else:
+            category_tensor = []
+            for feature in range(features.shape[1]):
+                if feature not in given:
+                    feature_vector = features[:, feature]
+                    sorted_feature_vector = feature_vector[np.argsort(
+                        feature_vector)]
+                else:
+                    pass
 
     def __compute_category_information_gain(
             self,
