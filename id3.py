@@ -213,7 +213,7 @@ class ID3DecisionTree:
         anytree = self.convert_tree_to_anytree(self.root)
         for pre, fill, node in RenderTree(anytree):
             # pre = pre.encode(encoding='UTF-8', errors='strict')
-            LOG.debug("%s%s" % (pre, node.name))
+            print("%s%s" % (pre, node.name))
 
     # TODO: Remove
     def convert_tree_to_anytree(self, tree: TreeNode):
@@ -274,7 +274,6 @@ class ID3DecisionTree:
             np.unique(node.get_labels(), return_counts=True)[-1])
 
         # LOG
-        LOG.debug(f'Learning Set Entropy: {learning_set_entropy}')
 
         # Determine splitting or terminal node conditions
         if learning_set_entropy == 0:
@@ -298,16 +297,6 @@ class ID3DecisionTree:
             split_categories = self.__compute_split_categories(
                 node=node, given=given)
 
-            # LOGGING
-            LOG.debug(type(split_categories))
-            LOG.debug(split_categories.shape)
-            for feature_category_ix, feature_category in enumerate(split_categories):
-                LOG.debug(feature_category_ix)
-                LOG.debug(len(feature_category)
-                          if None not in feature_category else 0)
-                LOG.debug(str(feature_category))
-                LOG.debug('\n\n')
-
             # Determine the split (category)
             information_gain_arr = self.__compute_category_information_gain(
                 split_categories=split_categories,
@@ -316,13 +305,11 @@ class ID3DecisionTree:
                 learning_set_entropy=learning_set_entropy)
 
             # LOG THE INFORMATION GAIN ARRAY
-            LOG.debug(str(information_gain_arr))
 
             # if the data is continuous, you will have to flatten it
             if self.__same_information_gain(
                     information_gain_arr=information_gain_arr, given=given, ):
 
-                LOG.debug('\nSame information gain for subset')
                 node.set_majority_decision()
 
             else:
@@ -354,13 +341,6 @@ class ID3DecisionTree:
                 # note the category will be a tuple
                 best_category_arr = split_categories[best_information_gain_ixs]
 
-                # LOGGING
-                LOG.debug('\n')
-                LOG.debug(f'Best Feature Ix: {best_feature_ix}')
-                LOG.debug(str(information_gain_arr[best_information_gain_ixs]))
-                LOG.debug(str(best_category_arr) +
-                          ' ' + str(type(best_category_arr)))
-
                 # Get the subset associated with the best split point
                 # if the data is continuous, then the subset
                 # are those points where the feature's rows correspond
@@ -371,10 +351,6 @@ class ID3DecisionTree:
                     node=node,)
 
                 # LOGGING
-                LOG.debug('\nSubset 0:')
-                LOG.debug(str(learning_subsets[0]))
-                LOG.debug('\nSubset 1:')
-                LOG.debug(str(learning_subsets[1]))
 
                 # Create child nodes with the left node's category being the
                 # the first interval in the best binary split point
@@ -610,9 +586,6 @@ class ID3DecisionTree:
         threshold = best_category_arr[0].right  # (-inf, threshold)
         category_1_ixs = np.where(feature_vector < threshold)[0]
 
-        LOG.debug(str(feature_vector))
-        LOG.debug(str(category_1_ixs))
-
         # Learnings subsets
         cur_learning_set = node.get_learning_set()
         num_rows = cur_learning_set.shape[0]
@@ -719,22 +692,6 @@ if __name__ == '__main__':
         default=None)
     args = parser.parse_args()
 
-    # TODO: Remove Logging
-    global LOG
-    LOG = logging.getLogger()
-    LOG.setLevel(logging.DEBUG)
-    dtime_lst = str(datetime.datetime.now()).split(' ')
-    dtime = dtime_lst[0].replace('-', '') + '_' + \
-        dtime_lst[1].replace(':', '-')[: dtime_lst[1].find('.')]
-    file_out = logging.FileHandler('./logs/' + dtime + '.log', 'w', 'utf-8')
-    stdout = logging.StreamHandler(sys.stdout)
-    LOG.addHandler(file_out)
-    LOG.addHandler(stdout)
-
-    LOG.debug('------------------------')
-    LOG.debug('MUST REMOVE ANYTREE')
-    LOG.debug('------------------------')
-
     # Tree instantiation
     tree = ID3DecisionTree()
 
@@ -750,8 +707,6 @@ if __name__ == '__main__':
         else:
             data = np.loadtxt(args.training_data,)
 
-        LOG.debug(f'Data Dims {data.shape}')
-
         # TODO: Case where learning set has 1 item ....
         # ... not necessary because this will just return decision
         # node
@@ -760,25 +715,19 @@ if __name__ == '__main__':
         tree.train(learning_set=data)
 
     # LOG DATA
-    LOG.debug('\n-----------------------')
-    LOG.debug(str(data))
-    LOG.debug('\n-----------------------')
 
     # TODO: Remove -- display tree
-    LOG.debug('\n-----------------------')
-    LOG.debug('TREE')
+
     tree.display_tree()
-    LOG.debug('\n-----------------------')
 
     # TESSSSSSSSSTING
     testing_set = data[:, :-1]
-    LOG.debug(str(testing_set))
 
     # Simple case where the test set has more than 1 data item
     preds = tree.predict(testing_set=testing_set)
-    LOG.debug(str(preds))
 
     # Compute accuracy
     accuracy = np.count_nonzero(preds == data[:, -1])
-    LOG.debug(preds.shape)
-    LOG.debug(f'{accuracy}/{testing_set.shape[0]}')
+
+    # Output accuracy
+    print(accuracy)
