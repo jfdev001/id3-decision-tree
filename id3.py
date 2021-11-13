@@ -17,6 +17,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import math
+from distutils.util import strtobool
 
 # TODO: Remove
 from anytree import Node, RenderTree
@@ -682,52 +683,52 @@ if __name__ == '__main__':
         help='path to txt file with training data for ID3 decision tree.',
         type=str)
     parser.add_argument(
-        '--testing_data',
-        help='path to txt file with testing data for ID3 decision tree.')
+        'testing_data',
+        help='path to txt file with testing data for ID3 decision tree.',
+        type=str,)
     parser.add_argument(
         '--small_sample',
         help='slice for smaller number of samples. (default: None)',
         type=int,
         nargs='+',
         default=None)
+    parser.add_argument(
+        '--percentage',
+        help='bool to output proportion or just the number of accurate predictions. (default: False)',
+        choices=['True', 'False'],
+        default='False')
+    parser.add_argument(
+        '--precision',
+        help='number of decimal points to keep. Not used by default (default: None)',
+        type=int,
+        default=None)
     args = parser.parse_args()
 
     # Tree instantiation
     tree = ID3DecisionTree()
 
-    # Load learning data
-    if args.training_data.endswith('xlsx'):
-        data = pd.read_excel(args.training_data).to_numpy()
-        tree = ID3DecisionTree()
-        tree.decision_tree_learning(learning_set=data)
-    elif args.training_data.endswith('txt'):
-        if args.small_sample is not None:
-            data = np.loadtxt(args.training_data,)[
-                args.small_sample[0]: args.small_sample[1], :]
-        else:
-            data = np.loadtxt(args.training_data,)
+    # Load data
+    learning_set = np.loadtxt(args.training_data)
+    testing_set = np.loadtxt(args.testing_data)
 
-        # TODO: Case where learning set has 1 item ....
-        # ... not necessary because this will just return decision
-        # node
+    tree = ID3DecisionTree()
+    tree.train(learning_set=learning_set)
 
-        tree = ID3DecisionTree()
-        tree.train(learning_set=data)
-
-    # LOG DATA
-
-    # TODO: Remove -- display tree
-
+    # TODO: Remove tree
     tree.display_tree()
-
-    # TESSSSSSSSSTING
-    testing_set = data[:, :-1]
 
     # Simple case where the test set has more than 1 data item
     preds = tree.predict(testing_set=testing_set)
 
     # Compute accuracy
-    accuracy = np.count_nonzero(preds == data[:, -1])
+    accuracy = np.count_nonzero(preds == testing_set[:, -1])
 
     # Output accuracy
-    print(accuracy)
+    if bool(strtobool(args.percentage)):
+        percentage = accuracy/testing_set.shape[0]
+        if args.precision is not None:
+            print(round(percentage, args.precision))
+        else:
+            print(percentage)
+    else:
+        print(accuracy)
