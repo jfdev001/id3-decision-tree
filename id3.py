@@ -687,12 +687,6 @@ if __name__ == '__main__':
         help='path to txt file with testing data for ID3 decision tree.',
         type=str,)
     parser.add_argument(
-        '--small_sample',
-        help='slice for smaller number of samples. (default: None)',
-        type=int,
-        nargs='+',
-        default=None)
-    parser.add_argument(
         '--percentage',
         help='bool to output proportion or just the number of accurate predictions. (default: False)',
         choices=['True', 'False'],
