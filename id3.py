@@ -1,3 +1,5 @@
+#!usr/bin/python
+
 """
 Author: Jared Frazier
 Project: OLA 3
@@ -5,6 +7,14 @@ File: id3.py
 Class: CSCI 4350
 Instructor: Dr. Joshua Phillips
 Description: Module for ID3 Decision Tree.
+
+for n in 5 10 25 50 75 100 125 140 145 149; do for ((x=0; x<100; x++)); do echo "cat iris-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done >> iris_out_$n.txt; done | parallelize.bash
+
+?? iris
+for n in 1 5 10 25 50 75 100 125 140 145 149; do for ((x=0; x<100; x++)); do echo "cat iris-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> iris_out.txt
+
+?? cancer
+for n in 1 5 10 25 50 75 90 100 104; do for ((x=0; x<100; x++)); do echo "cat cancer-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> cancer_out.txt
 
 Ch. 18 AIMA 3ed: Learning from Examples
 """
@@ -18,10 +28,6 @@ import numpy as np
 import pandas as pd
 import math
 from distutils.util import strtobool
-
-# TODO: Remove
-from anytree import Node, RenderTree
-
 
 class TreeNode:
     def __init__(self, category=None,):
@@ -147,7 +153,7 @@ class TreeNode:
         or value associated with it.
         """
 
-        return self.attribute is None and len(self.category) == 0
+        return self.attribute is None and self.category is None
 
     def is_leaf(self,) -> bool:
         """Returns bool for whether node is leaf.
@@ -209,28 +215,6 @@ class ID3DecisionTree:
         # The root of the tree
         self.root = TreeNode()
 
-    # TODO: Remove
-    def display_tree(self):
-        anytree = self.convert_tree_to_anytree(self.root)
-        for pre, fill, node in RenderTree(anytree):
-            # pre = pre.encode(encoding='UTF-8', errors='strict')
-            print("%s%s" % (pre, node.name))
-
-    # TODO: Remove
-    def convert_tree_to_anytree(self, tree: TreeNode):
-        anytree = Node(tree.name())
-        self.attach_children(tree, anytree)
-        return anytree
-
-    # TODO: Remove
-    # Attach the children from the decision tree into the anytree
-    # tree format.
-    def attach_children(self, parent_node: TreeNode, parent_anytree_node: Node):
-        for child_node in parent_node.get_children():
-            child_anytree_node = Node(
-                child_node.name(), parent=parent_anytree_node)
-            self.attach_children(child_node, child_anytree_node)
-
     def get_root(self,):
         """Gets the root of the tree."""
 
@@ -238,6 +222,9 @@ class ID3DecisionTree:
 
     def train(self, learning_set: np.ndarray,) -> None:
         """Train the decision tree on continuous data only."""
+
+        if len(learning_set.shape) == 1:
+            learning_set = np.expand_dims(learning_set, axis=0)
 
         self.__train(learning_set=learning_set, node=self.root)
 
@@ -704,12 +691,21 @@ if __name__ == '__main__':
     # Load data
     learning_set = np.loadtxt(args.training_data)
     testing_set = np.loadtxt(args.testing_data)
+    
+    # Reshape data
+    if len(learning_set.shape) == 1:
+        learning_set = np.expand_dims(learning_set, axis=0)
+    if len(testing_set.shape) == 1:
+        testing_set = np.expand_dims(testing_set, axis=0)
 
+    # Instantiate tree obj
     tree = ID3DecisionTree()
+    
+    # Train tree
     tree.train(learning_set=learning_set)
 
     # TODO: Remove tree
-    tree.display_tree()
+    # tree.display_tree()
 
     # Simple case where the test set has more than 1 data item
     preds = tree.predict(testing_set=testing_set)
