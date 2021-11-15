@@ -1,4 +1,4 @@
-"""Module for computing mean and std. error"""
+"""Script for computing mean and std. error"""
 
 import numpy as np
 import pandas as pd

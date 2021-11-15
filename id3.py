@@ -4,7 +4,7 @@ Project: OLA 3
 File: id3.py
 Class: CSCI 4350
 Instructor: Dr. Joshua Phillips
-Description: Module for ID3 Decision Tree.
+Description: Script for training and testing ID3 Decision Tree.
 """
 
 from __future__ import annotations

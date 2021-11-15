@@ -1,4 +1,4 @@
-"""Module for plotting data.
+"""Script for plotting data.
 
 On error bars:
 https://problemsolvingwithpython.com/06-Plotting-with-Matplotlib/06.07-Error-Bars/
