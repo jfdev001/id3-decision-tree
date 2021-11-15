@@ -26,7 +26,7 @@ Output for random resamples of testing size `n` were used to obtain the results 
 
 `n = [1,5,10,25,50,75,100,125,140,145,149]` while for the cancer data set
 
-`n=[1,5,10,25,50,75,90,100,104]`.
+`n = [1,5,10,25,50,75,90,100,104]`.
 
 Plotting and computation of descriptive statistics (mean and standard error) can be done using `plot.py` and `stats.py`, respectively.
 
