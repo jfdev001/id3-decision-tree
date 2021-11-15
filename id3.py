@@ -20,14 +20,12 @@ Ch. 18 AIMA 3ed: Learning from Examples
 """
 
 from __future__ import annotations
-import logging
-import datetime
-import sys
 import argparse
 import numpy as np
 import pandas as pd
 import math
 from distutils.util import strtobool
+
 
 class TreeNode:
     def __init__(self, category=None,):
@@ -691,7 +689,7 @@ if __name__ == '__main__':
     # Load data
     learning_set = np.loadtxt(args.training_data)
     testing_set = np.loadtxt(args.testing_data)
-    
+
     # Reshape data
     if len(learning_set.shape) == 1:
         learning_set = np.expand_dims(learning_set, axis=0)
@@ -700,7 +698,7 @@ if __name__ == '__main__':
 
     # Instantiate tree obj
     tree = ID3DecisionTree()
-    
+
     # Train tree
     tree.train(learning_set=learning_set)
 
