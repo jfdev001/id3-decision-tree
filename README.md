@@ -4,6 +4,8 @@ An implementation of the [ID3 Algorithm](https://en.wikipedia.org/wiki/ID3_algor
 
 For a less organized view, see branch `20211112-turnedin` for the materials turned in as part of MTSU's CSCI 4350 (Intro to AI) open lab assignment.
 
+For a summary of results, see `report/report.pdf`.
+
 # Installation
 
 This repository relies on the Python scientific computing/data analysis libraries NumPy, Pandas, and Matplotlib.
