@@ -1,5 +1,3 @@
-#!usr/bin/python
-
 """
 Author: Jared Frazier
 Project: OLA 3
@@ -7,16 +5,6 @@ File: id3.py
 Class: CSCI 4350
 Instructor: Dr. Joshua Phillips
 Description: Module for ID3 Decision Tree.
-
-for n in 5 10 25 50 75 100 125 140 145 149; do for ((x=0; x<100; x++)); do echo "cat iris-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done >> iris_out_$n.txt; done | parallelize.bash
-
-?? iris
-for n in 1 5 10 25 50 75 100 125 140 145 149; do for ((x=0; x<100; x++)); do echo "cat iris-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> iris_out.txt
-
-?? cancer
-for n in 1 5 10 25 50 75 90 100 104; do for ((x=0; x<100; x++)); do echo "cat cancer-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> cancer_out.txt
-
-Ch. 18 AIMA 3ed: Learning from Examples
 """
 
 from __future__ import annotations
