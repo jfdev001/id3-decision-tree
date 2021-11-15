@@ -513,6 +513,7 @@ class ID3DecisionTree:
         for feature_ix, feature in enumerate(split_categories):
             for category_ix, categories in enumerate(feature):
 
+                # TODO: Check efficiency
                 if None in categories:
                     information_gain_arr[feature_ix, :] = np.nan
 
