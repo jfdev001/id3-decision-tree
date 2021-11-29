@@ -30,6 +30,17 @@ Output for random resamples of testing size `n` were used to obtain the results 
 
 `n = [1,5,10,25,50,75,90,100,104]`.
 
+To reproduce the results in `stats/`, use the following commands for each respective dataset:
+
+```
+# iris
+for n in 1 5 10 25 50 75 100 125 140 145 149; do for ((x=0; x<100; x++)); do echo "cat iris-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> stats/iris_out.txt
+
+# cancer
+for n in 1 5 10 25 50 75 90 100 104; do for ((x=0; x<100; x++)); do echo "cat cancer-data.txt | ./split.bash $n python id3.py --percentage True --precision 3"; done | ./parallelize.bash; done >> stats/cancer_out.txt
+
+```
+
 Plotting and computation of descriptive statistics (mean and standard error) can be done using `plot.py` and `stats.py`, respectively.
 
 # Future Work
