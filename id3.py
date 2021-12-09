@@ -5,6 +5,8 @@ File: id3.py
 Class: CSCI 4350
 Instructor: Dr. Joshua Phillips
 Description: Script for training and testing ID3 Decision Tree.
+
+TODO: Attribute list [] should not be global for ID3DecisionTree.
 """
 
 from __future__ import annotations
